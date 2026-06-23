@@ -1,0 +1,1218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Coloroid Classic</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;700&family=Roboto:wght@300;400;700;900&display=swap');
+    
+    body {
+      font-family: 'Roboto', sans-serif;
+      touch-action: manipulation;
+      user-select: none;
+      -webkit-user-select: none;
+      background-color: #0d0e11;
+    }
+    
+    .mono {
+      font-family: 'Roboto Mono', monospace;
+    }
+
+    /* Android Holo Glowing Lines */
+    .holo-glow-blue {
+      box-shadow: 0 0 10px rgba(51, 181, 229, 0.4);
+    }
+    
+    .holo-border {
+      border-color: #33b5e5;
+    }
+
+    /* Wave effect animation */
+    @keyframes floodPulse {
+      0% { transform: scale(1.0); }
+      50% { transform: scale(0.92); filter: brightness(1.2); }
+      100% { transform: scale(1.0); }
+    }
+    
+    .flooding-active {
+      animation: floodPulse 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
+    }
+
+    /* Sliding Drawer Styles */
+    .drawer-transition {
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s linear;
+    }
+
+    /* Game Boy Style CRT overlay toggle */
+    .crt-effect {
+      position: relative;
+    }
+    .crt-effect::after {
+      content: " ";
+      display: block;
+      position: absolute;
+      top: 0; left: 0; bottom: 0; right: 0;
+      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+      z-index: 5;
+      background-size: 100% 4px, 6px 100%;
+      pointer-events: none;
+    }
+
+    /* Custom Input Slider Styling for Holo Look */
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #33b5e5;
+      cursor: pointer;
+      box-shadow: 0 0 8px rgba(51, 181, 229, 0.8);
+      transition: transform 0.1s ease;
+    }
+    input[type="range"]::-webkit-slider-thumb:active {
+      transform: scale(1.3);
+    }
+  </style>
+</head>
+<body class="text-slate-200 min-h-screen flex flex-col justify-between overflow-hidden">
+
+  <!-- ==================== ANDROID RETRO TOOLBAR ==================== -->
+  <header class="w-full bg-[#181a1f] border-b-2 border-[#33b5e5]/80 px-4 py-3 flex justify-between items-center z-20 shadow-md">
+    <div class="flex items-center space-x-3">
+      <!-- Menu/Drawer Toggle -->
+      <button onclick="toggleDrawer('menuDrawer', true)" class="p-1 rounded hover:bg-slate-800 transition active:scale-90" aria-label="Open Menu">
+        <svg class="w-6 h-6 text-[#33b5e5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </button>
+      <div>
+        <h1 class="text-lg font-black tracking-wider text-slate-100 uppercase flex items-center gap-1.5">
+          COLOROID <span class="text-[10px] bg-[#33b5e5]/20 text-[#33b5e5] px-1.5 py-0.5 rounded border border-[#33b5e5]/30">v1.9</span>
+        </h1>
+        <p id="submodeDisplay" class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mono">Classic Mode</p>
+      </div>
+    </div>
+    
+    <div class="flex items-center space-x-1">
+      <!-- Restart -->
+      <button onclick="restartBoard()" class="p-2 rounded hover:bg-slate-800 active:scale-90 text-slate-300 transition" title="Reset current board">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 1121.21 12H18M9.582 9A7.001 7.001 0 1115 10H12"></path>
+        </svg>
+      </button>
+      <!-- Undo -->
+      <button id="undoBtn" onclick="undoMove()" class="p-2 rounded hover:bg-slate-800 active:scale-90 text-slate-300 disabled:opacity-30 disabled:pointer-events-none transition" title="Undo Last Move">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.334 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z"></path>
+        </svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- ==================== MAIN CONTENT ==================== -->
+  <main class="flex-grow flex flex-col justify-center items-center w-full max-w-md mx-auto px-4 select-none relative">
+    
+    <!-- STATS AND METRICS HEADER -->
+    <div class="w-full grid grid-cols-3 gap-2 mb-3 mt-2 bg-[#14161c]/90 p-3 rounded-xl border border-slate-800/80">
+      <div class="flex flex-col text-center">
+        <span class="text-[9px] text-slate-400 uppercase tracking-widest font-bold">Moves</span>
+        <div class="flex items-baseline justify-center space-x-1">
+          <span id="moveCount" class="text-xl font-bold text-white mono">0</span>
+          <span id="moveDivider" class="text-slate-500 text-xs">/</span>
+          <span id="maxMoves" class="text-slate-400 text-sm font-semibold mono">25</span>
+        </div>
+      </div>
+      
+      <div class="flex flex-col text-center border-x border-slate-800/85">
+        <span class="text-[9px] text-slate-400 uppercase tracking-widest font-bold">Grid</span>
+        <span id="gridDisplay" class="text-sm font-extrabold text-[#33b5e5] mt-1 mono">14x14</span>
+      </div>
+
+      <div class="flex flex-col text-center">
+        <span id="scoreLabel" class="text-[9px] text-slate-400 uppercase tracking-widest font-bold">Flooded</span>
+        <span id="scoreDisplay" class="text-sm font-extrabold text-emerald-400 mt-1 mono">0.0%</span>
+      </div>
+    </div>
+
+    <!-- VERSUS INDICATOR BAR (Hidden by default, shown in VS Computer Mode) -->
+    <div id="vsIndicator" class="w-full hidden items-center justify-between mb-2 px-3 py-1.5 bg-slate-950/80 rounded-lg border border-slate-800 text-xs">
+      <div class="flex items-center space-x-1.5">
+        <span class="w-2.5 h-2.5 rounded bg-[#33b5e5]"></span>
+        <span class="font-bold">Player: <span id="p1Ownership" class="mono text-emerald-400">0%</span></span>
+      </div>
+      <div class="bg-slate-800 px-2 py-0.5 rounded text-[10px] font-bold text-slate-400 uppercase tracking-wider animate-pulse" id="turnIndicator">
+        Your Turn
+      </div>
+      <div class="flex items-center space-x-1.5">
+        <span class="font-bold">CPU: <span id="cpuOwnership" class="mono text-rose-400">0%</span></span>
+        <span class="w-2.5 h-2.5 rounded bg-rose-500"></span>
+      </div>
+    </div>
+
+    <!-- ==================== PLAYFIELD BOARD ==================== -->
+    <div id="crtWrapper" class="w-full aspect-square bg-[#111215] p-1.5 rounded-2xl border-2 border-slate-800 shadow-2xl relative overflow-hidden flex items-center justify-center">
+      <div id="gameGrid" class="grid w-full h-full gap-[0.5px] bg-slate-900/40 rounded-xl overflow-hidden">
+        <!-- Grid tiles are populated dynamically -->
+      </div>
+      
+      <!-- Overlay Screen for Game Results -->
+      <div id="gameOverlay" class="absolute inset-0 bg-[#0e1014]/95 backdrop-blur-xs flex flex-col items-center justify-center opacity-0 pointer-events-none transition-opacity duration-300 z-10">
+        <div class="text-center p-6 transform translate-y-4 transition-transform duration-300 max-w-xs" id="overlayContent">
+          <div id="overlayIcon" class="w-14 h-14 mx-auto mb-3 flex items-center justify-center rounded-xl bg-[#33b5e5]/10 text-[#33b5e5] border border-[#33b5e5]/30">
+            <!-- Dynamic Icon -->
+          </div>
+          <h2 id="overlayTitle" class="text-2xl font-black text-white mb-1 tracking-wider uppercase font-heading">VICTORY</h2>
+          <p id="overlaySub" class="text-slate-400 text-xs mb-5 leading-relaxed">You flooded the matrix with moves to spare!</p>
+          <div class="flex flex-col space-y-1.5">
+            <button id="overlayPrimaryBtn" onclick="startNewGame()" class="w-full py-2.5 px-6 bg-[#33b5e5] hover:bg-[#22a1ce] text-slate-950 font-bold rounded-lg shadow-lg active:scale-95 transition">
+              Play Again
+            </button>
+            <button onclick="toggleDrawer('menuDrawer', true)" class="w-full py-2 px-6 bg-slate-800 text-slate-300 text-xs font-semibold rounded-lg hover:bg-slate-700 transition">
+              Change Mode / Settings
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== COLOR PALETTE CONTROLS ==================== -->
+    <div class="w-full mt-4 mb-2">
+      <div id="colorPalette" class="flex justify-between items-center gap-1.5 bg-[#14161c] p-2.5 rounded-xl border border-slate-800/80">
+        <!-- Dynamic colored buttons -->
+      </div>
+      <p class="text-[9px] text-slate-500 uppercase tracking-widest font-bold mt-2 text-center">
+        Tap adjacent colors on the grid or use the palette below to fill
+      </p>
+    </div>
+
+  </main>
+
+  <!-- ==================== PERSISTENT CONFIG DRAWERS ==================== -->
+
+  <!-- Drawer Backdrop -->
+  <div id="drawerBackdrop" onclick="closeAllDrawers()" class="fixed inset-0 bg-black/60 z-30 opacity-0 pointer-events-none transition-opacity duration-200"></div>
+
+  <!-- Main Menu / Settings Drawer -->
+  <div id="menuDrawer" class="fixed top-0 left-0 bottom-0 w-72 bg-[#14161b] border-r-2 border-[#33b5e5]/80 z-40 transform -translate-x-full drawer-transition opacity-0 shadow-2xl flex flex-col justify-between">
+    <div class="p-5 overflow-y-auto flex-grow">
+      <!-- Header -->
+      <div class="flex justify-between items-center pb-4 border-b border-slate-800 mb-5">
+        <h3 class="text-md font-extrabold text-slate-200 uppercase tracking-wider flex items-center gap-2">
+          <svg class="w-5 h-5 text-[#33b5e5]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+          </svg>
+          Game Controls
+        </h3>
+        <button onclick="toggleDrawer('menuDrawer', false)" class="text-slate-400 hover:text-white transition active:scale-75">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Section: Game Modes -->
+      <div class="mb-5">
+        <span class="text-[10px] font-black text-[#33b5e5] uppercase tracking-wider block mb-2">Game Mode</span>
+        <div class="space-y-1.5">
+          <!-- Classic Mode -->
+          <button onclick="selectGameMode('classic')" id="mode-classic" class="w-full py-2 px-3 rounded-lg text-left text-xs font-bold border flex justify-between items-center transition bg-slate-950/40 border-slate-800 text-slate-300">
+            <div>
+              <p class="font-bold">Classic Flood</p>
+              <span class="text-[9px] font-normal text-slate-500">Traditional limit-based puzzle</span>
+            </div>
+            <span class="w-2.5 h-2.5 rounded-full bg-transparent border border-slate-600" id="indicator-classic"></span>
+          </button>
+          <!-- Zen Mode -->
+          <button onclick="selectGameMode('zen')" id="mode-zen" class="w-full py-2 px-3 rounded-lg text-left text-xs font-bold border flex justify-between items-center transition bg-slate-950/40 border-slate-800 text-slate-300">
+            <div>
+              <p class="font-bold">Zen Play</p>
+              <span class="text-[9px] font-normal text-slate-500">Unrestricted sandbox exploration</span>
+            </div>
+            <span class="w-2.5 h-2.5 rounded-full bg-transparent border border-slate-600" id="indicator-zen"></span>
+          </button>
+          <!-- VS AI Mode -->
+          <button onclick="selectGameMode('vs')" id="mode-vs" class="w-full py-2 px-3 rounded-lg text-left text-xs font-bold border flex justify-between items-center transition bg-slate-950/40 border-slate-800 text-slate-300">
+            <div>
+              <p class="font-bold">VS Computer</p>
+              <span class="text-[9px] font-normal text-slate-500">Territory expansion battle</span>
+            </div>
+            <span class="w-2.5 h-2.5 rounded-full bg-transparent border border-slate-600" id="indicator-vs"></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Section: Dynamic Matrix Slider -->
+      <div class="mb-5">
+        <div class="flex justify-between items-center mb-1">
+          <span class="text-[10px] font-black text-[#33b5e5] uppercase tracking-wider block">Matrix Size</span>
+          <span id="sliderValue" class="text-xs font-bold text-white mono bg-slate-950/80 px-2 py-0.5 rounded border border-slate-800">14 x 14</span>
+        </div>
+        <input type="range" id="sizeSlider" min="4" max="30" value="14" class="w-full accent-[#33b5e5] h-1.5 bg-slate-950 rounded-lg appearance-none cursor-pointer" oninput="updateSliderLabel(this.value)" onchange="applySliderSize(this.value)">
+        <div class="flex justify-between text-[9px] text-slate-500 font-bold uppercase mt-1">
+          <span>4x4</span>
+          <span id="sliderMovesCalc" class="text-slate-400">Est. 25 Moves</span>
+          <span>30x30</span>
+        </div>
+      </div>
+
+      <!-- Section: Display Options -->
+      <div class="mb-5 border-t border-slate-800/80 pt-4">
+        <span class="text-[10px] font-black text-[#33b5e5] uppercase tracking-wider block mb-2">Display & Colors</span>
+        <div class="space-y-2">
+          <!-- Theme Selection -->
+          <div>
+            <label class="text-[9px] text-slate-400 block mb-1">Color Palette Theme</label>
+            <select onchange="selectPalette(this.value)" class="w-full bg-slate-950/80 border border-slate-800 text-slate-200 px-2 py-1.5 rounded-md text-xs font-bold outline-none">
+              <option value="classic">Retro Vibrant (Classic)</option>
+              <option value="modern">Modern Neon</option>
+              <option value="pastel">Soft Pastel</option>
+              <option value="gameboy">Classic Gameboy Green</option>
+            </select>
+          </div>
+          <!-- Grid Overlay Toggles -->
+          <div class="flex items-center justify-between py-1">
+            <span class="text-xs text-slate-300">Retro CRT scanline layer</span>
+            <input type="checkbox" id="crtToggle" onchange="toggleCrtFilter(this.checked)" class="w-4 h-4 rounded text-[#33b5e5] bg-slate-900 border-slate-800">
+          </div>
+        </div>
+      </div>
+
+      <!-- Section: Settings -->
+      <div class="mb-5 border-t border-slate-800/80 pt-4">
+        <span class="text-[10px] font-black text-[#33b5e5] uppercase tracking-wider block mb-2">Preferences</span>
+        <div class="space-y-2.5">
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-slate-300">Sound Effects Synth</span>
+            <input type="checkbox" id="soundToggle" checked onchange="toggleSound(this.checked)" class="w-4 h-4 text-[#33b5e5] bg-slate-900 border-slate-800">
+          </div>
+          <div class="flex items-center justify-between">
+            <span class="text-xs text-slate-300">Haptic/Vibration</span>
+            <input type="checkbox" id="hapticToggle" checked onchange="toggleHaptic(this.checked)" class="w-4 h-4 text-[#33b5e5] bg-slate-900 border-slate-800">
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Drawer Footer -->
+    <div class="p-4 bg-slate-950/60 border-t border-slate-800 text-center">
+      <button onclick="openStatsModal()" class="w-full py-2 bg-slate-800 text-slate-200 hover:bg-slate-700 font-bold rounded-lg text-xs transition uppercase tracking-wider mb-2">
+        View Best Runs
+      </button>
+      <p class="text-[9px] text-slate-500 uppercase tracking-widest font-bold">Coloroid Classic for Android 16</p>
+    </div>
+  </div>
+
+  <!-- Stats / Record Book Overlay Modal -->
+  <div id="statsModal" class="fixed inset-0 bg-black/85 backdrop-blur-xs flex items-center justify-center p-4 z-50 opacity-0 pointer-events-none transition-opacity duration-200">
+    <div class="bg-[#14161b] border-2 border-[#33b5e5]/80 w-full max-w-sm rounded-2xl p-5 shadow-2xl">
+      <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-800">
+        <h3 class="text-md font-extrabold text-[#33b5e5] uppercase tracking-wider flex items-center gap-2">
+          🏆 Personal Achievements
+        </h3>
+        <button onclick="toggleModal('statsModal', false)" class="text-slate-400 hover:text-white transition">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      
+      <div class="space-y-3.5 mb-5">
+        <div class="grid grid-cols-2 gap-2 text-center">
+          <div class="bg-slate-950/50 p-2.5 rounded-lg border border-slate-800">
+            <span class="text-[9px] text-slate-500 uppercase block font-bold">Games Played</span>
+            <span id="statsPlayed" class="text-xl font-black text-white mono">0</span>
+          </div>
+          <div class="bg-slate-950/50 p-2.5 rounded-lg border border-slate-800">
+            <span class="text-[9px] text-slate-500 uppercase block font-bold">Win Rate</span>
+            <span id="statsWinRate" class="text-xl font-black text-emerald-400 mono">0%</span>
+          </div>
+        </div>
+
+        <div class="border-t border-slate-800/80 pt-3">
+          <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">High Score (Fewest Moves)</h4>
+          <div class="space-y-1.5 text-xs">
+            <div class="flex justify-between items-center bg-slate-950/20 px-3 py-2 rounded border border-slate-800">
+              <span class="text-slate-300">Active Grid Size (<span id="activeStatsSizeText" class="mono text-indigo-300">14x14</span>)</span>
+              <span id="activeStatsBestScore" class="font-bold text-white mono">-</span>
+            </div>
+          </div>
+          <p class="text-[9px] text-slate-500 italic mt-2 text-center">Records are logged dynamically for all sizes between 4x4 and 30x30.</p>
+        </div>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="resetStats()" class="w-1/2 py-2 bg-rose-950/40 text-rose-300 border border-rose-900/40 text-xs font-bold rounded-lg hover:bg-rose-900/30 transition">
+          Reset Scores
+        </button>
+        <button onclick="toggleModal('statsModal', false)" class="w-1/2 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-lg transition">
+          Close Window
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== LOGIC / JS ==================== -->
+  <script>
+    // Audio engine using Web Audio API
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let isSoundEnabled = true;
+    let isHapticEnabled = true;
+
+    function playSynthSound(type) {
+      if (!isSoundEnabled) return;
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+
+      if (type === 'click') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(450, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(120, audioCtx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.12);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.12);
+      } else if (type === 'cpu') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(250, audioCtx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(550, audioCtx.currentTime + 0.15);
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.15);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.15);
+      } else if (type === 'win') {
+        const arpeggio = [523.25, 659.25, 783.99, 1046.50];
+        arpeggio.forEach((f, i) => {
+          const oscNode = audioCtx.createOscillator();
+          const gainNode = audioCtx.createGain();
+          oscNode.connect(gainNode);
+          gainNode.connect(audioCtx.destination);
+          oscNode.type = 'triangle';
+          oscNode.frequency.setValueAtTime(f, audioCtx.currentTime + (i * 0.08));
+          gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime + (i * 0.08));
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + (i * 0.08) + 0.25);
+          oscNode.start(audioCtx.currentTime + (i * 0.08));
+          oscNode.stop(audioCtx.currentTime + (i * 0.08) + 0.25);
+        });
+      } else if (type === 'lose') {
+        const arpeggio = [392.00, 311.13, 261.63, 196.00];
+        arpeggio.forEach((f, i) => {
+          const oscNode = audioCtx.createOscillator();
+          const gainNode = audioCtx.createGain();
+          oscNode.connect(gainNode);
+          gainNode.connect(audioCtx.destination);
+          oscNode.type = 'sawtooth';
+          oscNode.frequency.setValueAtTime(f, audioCtx.currentTime + (i * 0.1));
+          gainNode.gain.setValueAtTime(0.08, audioCtx.currentTime + (i * 0.1));
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + (i * 0.1) + 0.3);
+          oscNode.start(audioCtx.currentTime + (i * 0.1));
+          oscNode.stop(audioCtx.currentTime + (i * 0.1) + 0.3);
+        });
+      }
+    }
+
+    // Vibration/Haptic feedback helper
+    function triggerHaptic(duration = 10) {
+      if (isHapticEnabled && navigator.vibrate) {
+        navigator.vibrate(duration);
+      }
+    }
+
+    // Color Palette Themes
+    const THEMES = {
+      classic: [
+        { color: '#e53935', name: 'Red', symbol: '●' },
+        { color: '#43a047', name: 'Green', symbol: '▲' },
+        { color: '#1e88e5', name: 'Blue', symbol: '■' },
+        { color: '#fdd835', name: 'Yellow', symbol: '✦' },
+        { color: '#8e24aa', name: 'Purple', symbol: '◆' },
+        { color: '#fb8c00', name: 'Orange', symbol: '★' }
+      ],
+      modern: [
+        { color: '#ff007f', name: 'Hot Pink', symbol: '●' },
+        { color: '#00f6ff', name: 'Cyan', symbol: '▲' },
+        { color: '#ab00ff', name: 'Indigo', symbol: '■' },
+        { color: '#ccff00', name: 'Lime', symbol: '✦' },
+        { color: '#ff6c00', name: 'Tangerine', symbol: '◆' },
+        { color: '#ffffff', name: 'Silver White', symbol: '★' }
+      ],
+      pastel: [
+        { color: '#ffb3ba', name: 'Peach Pastel', symbol: '●' },
+        { color: '#baffc9', name: 'Mint Pastel', symbol: '▲' },
+        { color: '#bae1ff', name: 'Sky Pastel', symbol: '■' },
+        { color: '#ffffba', name: 'Lemon Pastel', symbol: '✦' },
+        { color: '#e8cbff', name: 'Lavender Pastel', symbol: '◆' },
+        { color: '#ffd1b3', name: 'Coral Pastel', symbol: '★' }
+      ],
+      gameboy: [
+        { color: '#0f380f', name: 'Dark Green', symbol: '●' },
+        { color: '#306230', name: 'Mid Green', symbol: '▲' },
+        { color: '#8bac0f', name: 'Light Green', symbol: '■' },
+        { color: '#9bbc0f', name: 'Olive Green', symbol: '✦' },
+        { color: '#6b8c0f', name: 'Medium Lime', symbol: '◆' },
+        { color: '#55720f', name: 'Deep Olive', symbol: '★' }
+      ]
+    };
+
+    // System Variables
+    let currentMode = 'classic'; // 'classic', 'zen', 'vs'
+    let currentTheme = 'classic';
+    let size = 14; // Default starting size
+    let maxMoves = 25;
+    let grid = [];
+    let initialGrid = [];
+    let movesCount = 0;
+    let movesHistory = [];
+    let gameEnded = false;
+
+    // VS Computer Territory coordinates
+    let playerTerritory = []; // array of {r, c} strings "r,c"
+    let cpuTerritory = [];    // array of {r, c} strings "r,c"
+    let activeTurn = 'player'; // 'player' or 'cpu'
+
+    // Compute dynamic move count scaling linearly with grid size
+    function calculateMaxMoves(gridSize) {
+      // Linear progression formula designed for balanced pacing
+      return Math.floor(1.75 * gridSize) + 1;
+    }
+
+    // Dynamic slider preview support
+    function updateSliderLabel(val) {
+      document.getElementById('sliderValue').innerText = `${val} x ${val}`;
+      const estimatedMoves = calculateMaxMoves(parseInt(val));
+      document.getElementById('sliderMovesCalc').innerText = `Est. ${estimatedMoves} Moves`;
+    }
+
+    function applySliderSize(val) {
+      size = parseInt(val);
+      initGame();
+    }
+
+    // Initialize Game Engine
+    function initGame() {
+      maxMoves = calculateMaxMoves(size);
+      
+      const gridContainer = document.getElementById('gameGrid');
+      gridContainer.innerHTML = '';
+      gridContainer.style.gridTemplateColumns = `repeat(${size}, minmax(0, 1fr))`;
+      
+      document.getElementById('gridDisplay').innerText = `${size}x${size}`;
+      document.getElementById('sliderValue').innerText = `${size} x ${size}`;
+      document.getElementById('sizeSlider').value = size;
+      document.getElementById('sliderMovesCalc').innerText = `Est. ${maxMoves} Moves`;
+
+      // Reset state
+      grid = [];
+      movesCount = 0;
+      movesHistory = [];
+      gameEnded = false;
+      document.getElementById('undoBtn').disabled = true;
+
+      // Generate random map
+      for (let r = 0; r < size; r++) {
+        let row = [];
+        for (let c = 0; c < size; c++) {
+          row.push(Math.floor(Math.random() * 6));
+        }
+        grid.push(row);
+      }
+
+      // Preserve setup for Restart functionality
+      initialGrid = grid.map(row => [...row]);
+
+      // Set up Modes Specific Mechanics
+      if (currentMode === 'vs') {
+        document.getElementById('vsIndicator').classList.remove('hidden');
+        document.getElementById('vsIndicator').classList.add('flex');
+        document.getElementById('moveDivider').classList.add('hidden');
+        document.getElementById('maxMoves').classList.add('hidden');
+        document.getElementById('scoreLabel').innerText = 'Control';
+        
+        // Player 1 begins in top-left, CPU begins in bottom-right
+        playerTerritory = ["0,0"];
+        cpuTerritory = [`${size-1},${size-1}`];
+        
+        // Ensure starting cells don't have the same color
+        if (grid[0][0] === grid[size-1][size-1]) {
+          grid[size-1][size-1] = (grid[0][0] + 1) % 6;
+        }
+
+        activeTurn = 'player';
+        document.getElementById('turnIndicator').innerText = "Your Turn";
+        document.getElementById('turnIndicator').className = "bg-[#33b5e5]/20 text-[#33b5e5] border border-[#33b5e5]/40 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider";
+
+        // Initial territory calculation
+        calculateTerritory('player');
+        calculateTerritory('cpu');
+      } else {
+        document.getElementById('vsIndicator').classList.remove('flex');
+        document.getElementById('vsIndicator').classList.add('hidden');
+        document.getElementById('moveDivider').classList.remove('hidden');
+        document.getElementById('maxMoves').classList.remove('hidden');
+        document.getElementById('scoreLabel').innerText = 'Flooded';
+        
+        if (currentMode === 'zen') {
+          document.getElementById('moveDivider').classList.add('hidden');
+          document.getElementById('maxMoves').classList.add('hidden');
+        } else {
+          document.getElementById('maxMoves').innerText = maxMoves;
+        }
+      }
+
+      document.getElementById('moveCount').innerText = movesCount;
+      document.getElementById('gameOverlay').classList.add('opacity-0', 'pointer-events-none');
+      
+      renderBoard();
+      renderPalette();
+      updateScoreMetrics();
+    }
+
+    // Render Playfield
+    function renderBoard() {
+      const gridContainer = document.getElementById('gameGrid');
+      gridContainer.innerHTML = '';
+      const themeColors = THEMES[currentTheme];
+
+      // Clean look: suppress text symbols on compact dense grids (greater than 16) to avoid noise
+      const isAccessibility = currentTheme === 'accessibility';
+      const showAccessibilitySymbols = isAccessibility && size <= 16;
+
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          const colorIdx = grid[r][c];
+          const colorInfo = themeColors[colorIdx];
+          const key = `${r},${c}`;
+
+          const tile = document.createElement('div');
+          tile.id = `tile-${r}-${c}`;
+          tile.className = 'w-full h-full relative cursor-pointer select-none transition-colors duration-200 overflow-hidden flex items-center justify-center font-bold text-[9px] text-black/25';
+          tile.style.backgroundColor = colorInfo.color;
+
+          if (showAccessibilitySymbols) {
+            tile.innerHTML = colorInfo.symbol;
+          }
+
+          // In VS AI Mode, overlay territorial ownership marks
+          if (currentMode === 'vs') {
+            if (playerTerritory.includes(key)) {
+              // Highlight human player zone
+              const dot = document.createElement('div');
+              dot.className = "absolute inset-0 border-[1.5px] border-[#33b5e5] bg-[#33b5e5]/10 flex items-center justify-center";
+              dot.innerHTML = `<span class="text-[#33b5e5] opacity-50 text-[8px] pointer-events-none">●</span>`;
+              tile.appendChild(dot);
+            } else if (cpuTerritory.includes(key)) {
+              // Highlight CPU player zone
+              const dot = document.createElement('div');
+              dot.className = "absolute inset-0 border-[1.5px] border-rose-500 bg-rose-500/10 flex items-center justify-center";
+              dot.innerHTML = `<span class="text-rose-500 opacity-50 text-[8px] pointer-events-none">■</span>`;
+              tile.appendChild(dot);
+            }
+          }
+
+          // Directly tap tiles on board to perform color fill changes (Original Coloroid style)
+          tile.addEventListener('click', () => {
+            if (gameEnded) return;
+            if (currentMode === 'vs' && activeTurn !== 'player') return;
+            
+            // Check if tapped tile is already owned
+            if (currentMode === 'vs') {
+              if (playerTerritory.includes(key) || cpuTerritory.includes(key)) return;
+            } else {
+              if (r === 0 && c === 0) return; // ignore clicking start tile directly if it does not change color
+            }
+
+            handleColorSelection(colorIdx);
+          });
+
+          gridContainer.appendChild(tile);
+        }
+      }
+    }
+
+    // Render Controller Palette Buttons
+    function renderPalette() {
+      const paletteContainer = document.getElementById('colorPalette');
+      paletteContainer.innerHTML = '';
+      const themeColors = THEMES[currentTheme];
+
+      themeColors.forEach((colorObj, idx) => {
+        const btn = document.createElement('button');
+        btn.className = 'w-10 h-10 sm:w-12 sm:h-12 rounded-xl border border-slate-950/20 active:scale-90 transition-transform shadow-md relative flex items-center justify-center font-extrabold text-black/35 text-xs';
+        btn.style.backgroundColor = colorObj.color;
+        btn.innerHTML = colorObj.symbol;
+
+        // In VS mode, lock buttons for colors currently held by players
+        if (currentMode === 'vs') {
+          const p1Color = grid[0][0];
+          const cpuColor = grid[size-1][size-1];
+          if (idx === p1Color || idx === cpuColor) {
+            btn.classList.add('opacity-10');
+            btn.disabled = true;
+          }
+        }
+
+        btn.onclick = () => {
+          if (gameEnded) return;
+          if (currentMode === 'vs' && activeTurn !== 'player') return;
+          handleColorSelection(idx);
+        };
+
+        paletteContainer.appendChild(btn);
+      });
+    }
+
+    // Capture Input Selection
+    function handleColorSelection(colorIndex) {
+      if (currentMode === 'vs') {
+        const p1Color = grid[0][0];
+        const cpuColor = grid[size-1][size-1];
+        if (colorIndex === p1Color || colorIndex === cpuColor) return; // lock claimed colors
+
+        triggerHaptic(15);
+        playSynthSound('click');
+
+        // Capture logic for player
+        movesHistory.push(grid.map(row => [...row]));
+        document.getElementById('undoBtn').disabled = false;
+
+        // Flood current player's territory
+        playerTerritory.forEach(pos => {
+          const [r, c] = pos.split(',').map(Number);
+          grid[r][c] = colorIndex;
+        });
+
+        calculateTerritory('player');
+        animateWave(0, 0, colorIndex);
+
+        movesCount++;
+        document.getElementById('moveCount').innerText = movesCount;
+
+        // Transfer Turn
+        activeTurn = 'cpu';
+        document.getElementById('turnIndicator').innerText = "CPU Thinking...";
+        document.getElementById('turnIndicator').className = "bg-rose-500/20 text-rose-400 border border-rose-500/40 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider animate-pulse";
+        
+        // Defer CPU choice slightly for visual delay
+        setTimeout(handleCpuTurn, 650);
+
+      } else {
+        const activeColor = grid[0][0];
+        if (colorIndex === activeColor) return;
+
+        triggerHaptic(15);
+        playSynthSound('click');
+
+        // Save History
+        movesHistory.push(grid.map(row => [...row]));
+        document.getElementById('undoBtn').disabled = false;
+
+        // Run Flood Engine
+        floodFill(0, 0, activeColor, colorIndex);
+        animateWave(0, 0, colorIndex);
+
+        movesCount++;
+        document.getElementById('moveCount').innerText = movesCount;
+
+        updateScoreMetrics();
+        renderPalette();
+        checkGameStatus();
+      }
+    }
+
+    // Classic Flood Fill DFS / BFS
+    function floodFill(r, c, oldColor, newColor) {
+      if (r < 0 || r >= size || c < 0 || c >= size) return;
+      if (grid[r][c] !== oldColor) return;
+
+      grid[r][c] = newColor;
+
+      floodFill(r + 1, c, oldColor, newColor);
+      floodFill(r - 1, c, oldColor, newColor);
+      floodFill(r, c + 1, oldColor, newColor);
+      floodFill(r, c - 1, oldColor, newColor);
+    }
+
+    // Wave Propagation Visuals
+    function animateWave(startR, startC, targetColorIndex) {
+      const themeColors = THEMES[currentTheme];
+      const targetColor = themeColors[targetColorIndex].color;
+
+      for (let r = 0; r < size; r++) {
+        for (let c = 0; c < size; c++) {
+          const element = document.getElementById(`tile-${r}-${c}`);
+          if (!element) continue;
+
+          // Manhattan distance from the source tile determines cascade delay
+          const distance = Math.abs(r - startR) + Math.abs(c - startC);
+          const delay = distance * 22;
+
+          setTimeout(() => {
+            if (grid[r][c] === targetColorIndex) {
+              element.style.backgroundColor = targetColor;
+              element.classList.add('flooding-active');
+              // Clear styling classes after loop completes
+              setTimeout(() => {
+                element.classList.remove('flooding-active');
+              }, 250);
+            }
+          }, delay);
+        }
+      }
+    }
+
+    // VS mode territory discovery (BFS algorithm)
+    function calculateTerritory(role) {
+      let queue = [];
+      let territory = role === 'player' ? playerTerritory : cpuTerritory;
+      let otherTerritory = role === 'player' ? cpuTerritory : playerTerritory;
+      
+      let visited = new Set(territory);
+      queue = [...territory];
+
+      const activeColor = role === 'player' ? grid[0][0] : grid[size-1][size-1];
+
+      while (queue.length > 0) {
+        const curr = queue.shift();
+        const [r, c] = curr.split(',').map(Number);
+
+        const directions = [
+          [r + 1, c], [r - 1, c], [r, c + 1], [r, c - 1]
+        ];
+
+        for (const [nr, nc] of directions) {
+          if (nr >= 0 && nr < size && nc >= 0 && nc < size) {
+            const key = `${nr},${nc}`;
+            if (!visited.has(key) && grid[nr][nc] === activeColor && !otherTerritory.includes(key)) {
+              visited.add(key);
+              queue.push(key);
+            }
+          }
+        }
+      }
+
+      if (role === 'player') {
+        playerTerritory = Array.from(visited);
+      } else {
+        cpuTerritory = Array.from(visited);
+      }
+    }
+
+    // Greedy AI Opponent Logic for VS Mode
+    function handleCpuTurn() {
+      if (gameEnded) return;
+
+      const p1Color = grid[0][0];
+      const cpuColor = grid[size-1][size-1];
+
+      // Evaluation loop: Try out each color option to see which claims the most tiles
+      let bestColor = -1;
+      let maxCaptured = -1;
+
+      for (let colorIdx = 0; colorIdx < 6; colorIdx++) {
+        if (colorIdx === p1Color || colorIdx === cpuColor) continue;
+
+        // Run simulation
+        let tempCpuTerritory = [...cpuTerritory];
+        let visited = new Set(tempCpuTerritory);
+        let queue = [...tempCpuTerritory];
+
+        while (queue.length > 0) {
+          const curr = queue.shift();
+          const [r, c] = curr.split(',').map(Number);
+          const directions = [[r+1, c], [r-1, c], [r, c+1], [r, c-1]];
+
+          for (const [nr, nc] of directions) {
+            if (nr >= 0 && nr < size && nc >= 0 && nc < size) {
+              const key = `${nr},${nc}`;
+              // Simulate flooding adjacent matching color cells
+              if (!visited.has(key) && grid[nr][nc] === colorIdx && !playerTerritory.includes(key)) {
+                visited.add(key);
+                queue.push(key);
+              }
+            }
+          }
+        }
+
+        if (visited.size > maxCaptured) {
+          maxCaptured = visited.size;
+          bestColor = colorIdx;
+        }
+      }
+
+      // Default fallback if no expansion option is found
+      if (bestColor === -1) {
+        for (let i = 0; i < 6; i++) {
+          if (i !== p1Color && i !== cpuColor) {
+            bestColor = i;
+            break;
+          }
+        }
+      }
+
+      // Execute AI Flood Selection
+      playSynthSound('cpu');
+      cpuTerritory.forEach(pos => {
+        const [r, c] = pos.split(',').map(Number);
+        grid[r][c] = bestColor;
+      });
+
+      calculateTerritory('cpu');
+      animateWave(size-1, size-1, bestColor);
+
+      // Restore turn control to player
+      activeTurn = 'player';
+      document.getElementById('turnIndicator').innerText = "Your Turn";
+      document.getElementById('turnIndicator').className = "bg-[#33b5e5]/20 text-[#33b5e5] border border-[#33b5e5]/40 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider";
+
+      renderPalette();
+      updateScoreMetrics();
+      checkGameStatus();
+    }
+
+    // Score Metrics Update Handler
+    function updateScoreMetrics() {
+      const totalTiles = size * size;
+
+      if (currentMode === 'vs') {
+        const p1Pct = ((playerTerritory.length / totalTiles) * 100).toFixed(1);
+        const cpuPct = ((cpuTerritory.length / totalTiles) * 100).toFixed(1);
+
+        document.getElementById('p1Ownership').innerText = `${p1Pct}%`;
+        document.getElementById('cpuOwnership').innerText = `${cpuPct}%`;
+        document.getElementById('scoreDisplay').innerText = `${p1Pct}%`;
+      } else {
+        // Classic flood metrics evaluation
+        const originColor = grid[0][0];
+        let floodedCount = 0;
+
+        // BFS to find total cells connected to origin
+        let visited = new Set(["0,0"]);
+        let queue = ["0,0"];
+
+        while (queue.length > 0) {
+          const curr = queue.shift();
+          const [r, c] = curr.split(',').map(Number);
+          floodedCount++;
+
+          const directions = [[r+1, c], [r-1, c], [r, c+1], [r, c-1]];
+          for (const [nr, nc] of directions) {
+            if (nr >= 0 && nr < size && nc >= 0 && nc < size) {
+              const key = `${nr},${nc}`;
+              if (!visited.has(key) && grid[nr][nc] === originColor) {
+                visited.add(key);
+                queue.push(key);
+              }
+            }
+          }
+        }
+
+        const pct = ((floodedCount / totalTiles) * 100).toFixed(1);
+        document.getElementById('scoreDisplay').innerText = `${pct}%`;
+      }
+    }
+
+    // Score / Record Keeping
+    function checkGameStatus() {
+      const totalTiles = size * size;
+
+      if (currentMode === 'vs') {
+        const remainingPlayable = totalTiles - (playerTerritory.length + cpuTerritory.length);
+        if (remainingPlayable === 0) {
+          const humanWins = playerTerritory.length > cpuTerritory.length;
+          triggerEndscreen(humanWins);
+        }
+      } else {
+        const originColor = grid[0][0];
+        let solved = true;
+
+        for (let r = 0; r < size; r++) {
+          for (let c = 0; c < size; c++) {
+            if (grid[r][c] !== originColor) {
+              solved = false;
+              break;
+            }
+          }
+          if (!solved) break;
+        }
+
+        if (solved) {
+          triggerEndscreen(true);
+        } else if (currentMode === 'classic' && movesCount >= maxMoves) {
+          triggerEndscreen(false);
+        }
+      }
+    }
+
+    // Advance Level (+1 Grid Size) Function
+    function advanceLevel() {
+      if (size < 30) {
+        size++;
+        document.getElementById('sizeSlider').value = size;
+        updateSliderLabel(size);
+      }
+      initGame();
+    }
+
+    // Game Results Panel Screen Trigger
+    function triggerEndscreen(hasWon) {
+      gameEnded = true;
+      const overlay = document.getElementById('gameOverlay');
+      const icon = document.getElementById('overlayIcon');
+      const title = document.getElementById('overlayTitle');
+      const sub = document.getElementById('overlaySub');
+      const primaryBtn = document.getElementById('overlayPrimaryBtn');
+
+      overlay.classList.remove('opacity-0', 'pointer-events-none');
+      updateStats(hasWon);
+
+      if (hasWon) {
+        playSynthSound('win');
+        triggerHaptic(100);
+        icon.className = "w-14 h-14 mx-auto mb-3 flex items-center justify-center rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30";
+        icon.innerHTML = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>`;
+        title.innerText = "VICTORY!";
+        title.className = "text-2xl font-black text-emerald-400 mb-1 tracking-wider font-heading";
+        
+        if (currentMode === 'vs') {
+          sub.innerText = `Territorial Domination! You conquered ${playerTerritory.length} tiles against the CPU's ${cpuTerritory.length} on the ${size}x${size} map.`;
+        } else {
+          sub.innerText = `Splendid! You completed the ${size}x${size} flood matrix in ${movesCount} moves!`;
+        }
+
+        // Dynamically configure Button to increase grid size by 1 upon win
+        if (size < 30) {
+          primaryBtn.innerText = `Next Level (${size + 1}x${size + 1})`;
+          primaryBtn.onclick = advanceLevel;
+        } else {
+          primaryBtn.innerText = "Play Again (Max Size reached!)";
+          primaryBtn.onclick = startNewGame;
+        }
+
+      } else {
+        playSynthSound('lose');
+        triggerHaptic(200);
+        icon.className = "w-14 h-14 mx-auto mb-3 flex items-center justify-center rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/30";
+        icon.innerHTML = `<svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M6 18L18 6M6 6l12 12"></path></svg>`;
+        title.innerText = "DEFEAT";
+        title.className = "text-2xl font-black text-rose-500 mb-1 tracking-wider font-heading";
+
+        if (currentMode === 'vs') {
+          sub.innerText = `The computer claimed dominance with ${cpuTerritory.length} tiles to your ${playerTerritory.length}.`;
+        } else {
+          sub.innerText = `You ran out of moves on the ${size}x${size} grid! Try again to conquer this layout.`;
+        }
+
+        // Keep size the same on defeat so players can try again
+        primaryBtn.innerText = "Try Again";
+        primaryBtn.onclick = startNewGame;
+      }
+    }
+
+    // Persist Stats
+    function updateStats(hasWon) {
+      let stats = JSON.parse(localStorage.getItem('coloroid_retro_stats_v2')) || {
+        played: 0,
+        wins: 0,
+        bestScores: {} // Holds records for individual dynamic dimensions "14x14", etc.
+      };
+
+      stats.played += 1;
+      if (hasWon) {
+        stats.wins += 1;
+        if (currentMode === 'classic') {
+          const key = `${size}x${size}`;
+          const currentRecord = stats.bestScores[key];
+          if (currentRecord === undefined || currentRecord === null) {
+            stats.bestScores[key] = movesCount;
+          } else {
+            stats.bestScores[key] = Math.min(currentRecord, movesCount);
+          }
+        }
+      }
+
+      localStorage.setItem('coloroid_retro_stats_v2', JSON.stringify(stats));
+    }
+
+    // Restore moves
+    function undoMove() {
+      if (movesHistory.length === 0 || gameEnded) return;
+
+      playSynthSound('click');
+      triggerHaptic(8);
+      
+      grid = movesHistory.pop();
+      movesCount--;
+      document.getElementById('moveCount').innerText = movesCount;
+
+      if (movesHistory.length === 0) {
+        document.getElementById('undoBtn').disabled = true;
+      }
+
+      if (currentMode === 'vs') {
+        // Reverse both computer and player turns in versus mode
+        if (movesHistory.length > 0) {
+          grid = movesHistory.pop();
+          movesCount--;
+          document.getElementById('moveCount').innerText = movesCount;
+        }
+        calculateTerritory('player');
+        calculateTerritory('cpu');
+      }
+
+      renderBoard();
+      renderPalette();
+      updateScoreMetrics();
+    }
+
+    // Restart exact board state
+    function restartBoard() {
+      triggerHaptic(15);
+      grid = initialGrid.map(row => [...row]);
+      movesHistory = [];
+      movesCount = 0;
+      gameEnded = false;
+
+      document.getElementById('moveCount').innerText = movesCount;
+      document.getElementById('undoBtn').disabled = true;
+      document.getElementById('gameOverlay').classList.add('opacity-0', 'pointer-events-none');
+
+      if (currentMode === 'vs') {
+        playerTerritory = ["0,0"];
+        cpuTerritory = [`${size-1},${size-1}`];
+        activeTurn = 'player';
+        calculateTerritory('player');
+        calculateTerritory('cpu');
+      }
+
+      renderBoard();
+      renderPalette();
+      updateScoreMetrics();
+    }
+
+    // Global UI Managers
+    function toggleDrawer(id, show) {
+      const drawer = document.getElementById(id);
+      const backdrop = document.getElementById('drawerBackdrop');
+      if (show) {
+        drawer.classList.remove('-translate-x-full', 'opacity-0');
+        drawer.classList.add('translate-x-0', 'opacity-100');
+        backdrop.classList.remove('pointer-events-none', 'opacity-0');
+        backdrop.classList.add('opacity-100');
+      } else {
+        drawer.classList.remove('translate-x-0', 'opacity-100');
+        drawer.classList.add('-translate-x-full', 'opacity-0');
+        backdrop.classList.remove('opacity-100');
+        backdrop.classList.add('pointer-events-none', 'opacity-0');
+      }
+    }
+
+    function closeAllDrawers() {
+      toggleDrawer('menuDrawer', false);
+    }
+
+    function toggleModal(id, show) {
+      const modal = document.getElementById(id);
+      if (show) {
+        modal.classList.remove('pointer-events-none', 'opacity-0');
+        modal.classList.add('opacity-100');
+      } else {
+        modal.classList.remove('opacity-100');
+        modal.classList.add('pointer-events-none', 'opacity-0');
+      }
+    }
+
+    function openStatsModal() {
+      let stats = JSON.parse(localStorage.getItem('coloroid_retro_stats_v2')) || {
+        played: 0,
+        wins: 0,
+        bestScores: {}
+      };
+
+      const winRate = stats.played > 0 ? Math.round((stats.wins / stats.played) * 100) : 0;
+      const sizeKey = `${size}x${size}`;
+      const bestScore = stats.bestScores[sizeKey];
+
+      document.getElementById('statsPlayed').innerText = stats.played;
+      document.getElementById('statsWinRate').innerText = `${winRate}%`;
+      document.getElementById('activeStatsSizeText').innerText = sizeKey;
+      document.getElementById('activeStatsBestScore').innerText = bestScore ? `${bestScore} moves` : '-';
+
+      toggleModal('statsModal', true);
+    }
+
+    // Reset scores
+    function resetStats() {
+      if (confirm("Reset achievement stats and clear records?")) {
+        localStorage.removeItem('coloroid_retro_stats_v2');
+        openStatsModal();
+      }
+    }
+
+    // Preferences & Settings Configuration Functions
+    function selectGameMode(mode) {
+      ['classic', 'zen', 'vs'].forEach(m => {
+        const btn = document.getElementById(`mode-${m}`);
+        const ind = document.getElementById(`indicator-${m}`);
+        btn.className = "w-full py-2 px-3 rounded-lg text-left text-xs font-bold border flex justify-between items-center transition bg-slate-950/40 border-slate-800 text-slate-300";
+        ind.className = "w-2.5 h-2.5 rounded-full bg-transparent border border-slate-600";
+      });
+
+      const activeBtn = document.getElementById(`mode-${mode}`);
+      const activeInd = document.getElementById(`indicator-${mode}`);
+      activeBtn.className = "w-full py-2 px-3 rounded-lg text-left text-xs font-bold border flex justify-between items-center transition bg-[#33b5e5]/10 border-[#33b5e5]/60 text-white shadow-sm shadow-[#33b5e5]/10";
+      activeInd.className = "w-2.5 h-2.5 rounded-full bg-[#33b5e5]";
+
+      currentMode = mode;
+      
+      const subLabels = { classic: 'Classic Mode', zen: 'Zen Play', vs: 'VS Computer' };
+      document.getElementById('submodeDisplay').innerText = subLabels[mode];
+
+      closeAllDrawers();
+      initGame();
+    }
+
+    function selectPalette(theme) {
+      currentTheme = theme;
+      renderBoard();
+      renderPalette();
+    }
+
+    function toggleCrtFilter(enabled) {
+      const wrapper = document.getElementById('crtWrapper');
+      if (enabled) {
+        wrapper.classList.add('crt-effect');
+      } else {
+        wrapper.classList.remove('crt-effect');
+      }
+    }
+
+    function toggleSound(enabled) {
+      isSoundEnabled = enabled;
+    }
+
+    function toggleHaptic(enabled) {
+      isHapticEnabled = enabled;
+    }
+
+    function startNewGame() {
+      initGame();
+    }
+
+    // Engine On-Load Init Entry
+    window.onload = function() {
+      // Highlight initial modes
+      selectGameMode('classic');
+      updateSliderLabel(size);
+    }
+  </script>
+</body>
+</html>
