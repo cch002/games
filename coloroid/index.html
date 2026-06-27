@@ -41,6 +41,18 @@
       animation: floodPulse 0.25s cubic-bezier(0.25, 0.8, 0.25, 1);
     }
 
+    /* Hint suggestion pulse on a palette button */
+    @keyframes hintPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(51, 181, 229, 0.0); }
+      50%      { box-shadow: 0 0 0 6px rgba(51, 181, 229, 0.65); }
+    }
+    .hint-glow {
+      animation: hintPulse 0.7s ease-in-out 4;
+      outline: 3px solid #33b5e5;
+      outline-offset: 2px;
+      z-index: 2;
+    }
+
     /* Sliding Drawer Styles */
     .drawer-transition {
       transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s linear;
@@ -98,6 +110,12 @@
     </div>
     
     <div class="flex items-center space-x-1">
+      <!-- Hint -->
+      <button id="hintBtn" onclick="showHint()" class="p-2 rounded hover:bg-slate-800 active:scale-90 text-amber-300 transition" title="Suggest the best color to play next">
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 18h6M10 21h4M12 3a6 6 0 00-3.5 10.9c.5.4.8.9.9 1.5l.1.6h5l.1-.6c.1-.6.4-1.1.9-1.5A6 6 0 0012 3z"></path>
+        </svg>
+      </button>
       <!-- Restart -->
       <button onclick="restartBoard()" class="p-2 rounded hover:bg-slate-800 active:scale-90 text-slate-300 transition" title="Reset current board">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,13 +141,13 @@
         <div class="flex items-baseline justify-center space-x-1">
           <span id="moveCount" class="text-xl font-bold text-white mono">0</span>
           <span id="moveDivider" class="text-slate-500 text-xs">/</span>
-          <span id="maxMoves" class="text-slate-400 text-sm font-semibold mono">25</span>
+          <span id="maxMoves" class="text-slate-400 text-sm font-semibold mono">11</span>
         </div>
       </div>
       
       <div class="flex flex-col text-center border-x border-slate-800/85">
         <span class="text-[9px] text-slate-400 uppercase tracking-widest font-bold">Grid</span>
-        <span id="gridDisplay" class="text-sm font-extrabold text-[#33b5e5] mt-1 mono">14x14</span>
+        <span id="gridDisplay" class="text-sm font-extrabold text-[#33b5e5] mt-1 mono">4x4</span>
       </div>
 
       <div class="flex flex-col text-center">
@@ -185,7 +203,7 @@
         <!-- Dynamic colored buttons -->
       </div>
       <p class="text-[9px] text-slate-500 uppercase tracking-widest font-bold mt-2 text-center">
-        Tap adjacent colors on the grid or use the palette below to fill
+        Tap a color on the grid or palette to fill &middot; Stuck? Tap the 💡 hint button
       </p>
     </div>
 
@@ -245,16 +263,29 @@
         </div>
       </div>
 
+      <!-- Section: Color Count (Difficulty) -->
+      <div class="mb-5">
+        <div class="flex justify-between items-center mb-2">
+          <span class="text-[10px] font-black text-[#33b5e5] uppercase tracking-wider block">Colors (Difficulty)</span>
+          <span class="text-[9px] text-slate-500 font-bold uppercase">Fewer = easier</span>
+        </div>
+        <div class="grid grid-cols-3 gap-1.5">
+          <button onclick="selectColorCount(4)" id="colors-4" class="py-2 rounded-lg text-xs font-bold border transition bg-slate-950/40 border-slate-800 text-slate-300">4</button>
+          <button onclick="selectColorCount(5)" id="colors-5" class="py-2 rounded-lg text-xs font-bold border transition bg-slate-950/40 border-slate-800 text-slate-300">5</button>
+          <button onclick="selectColorCount(6)" id="colors-6" class="py-2 rounded-lg text-xs font-bold border transition bg-slate-950/40 border-slate-800 text-slate-300">6</button>
+        </div>
+      </div>
+
       <!-- Section: Dynamic Matrix Slider -->
       <div class="mb-5">
         <div class="flex justify-between items-center mb-1">
           <span class="text-[10px] font-black text-[#33b5e5] uppercase tracking-wider block">Matrix Size</span>
-          <span id="sliderValue" class="text-xs font-bold text-white mono bg-slate-950/80 px-2 py-0.5 rounded border border-slate-800">14 x 14</span>
+          <span id="sliderValue" class="text-xs font-bold text-white mono bg-slate-950/80 px-2 py-0.5 rounded border border-slate-800">4 x 4</span>
         </div>
-        <input type="range" id="sizeSlider" min="4" max="30" value="14" class="w-full accent-[#33b5e5] h-1.5 bg-slate-950 rounded-lg appearance-none cursor-pointer" oninput="updateSliderLabel(this.value)" onchange="applySliderSize(this.value)">
+        <input type="range" id="sizeSlider" min="4" max="30" value="4" class="w-full accent-[#33b5e5] h-1.5 bg-slate-950 rounded-lg appearance-none cursor-pointer" oninput="updateSliderLabel(this.value)" onchange="applySliderSize(this.value)">
         <div class="flex justify-between text-[9px] text-slate-500 font-bold uppercase mt-1">
           <span>4x4</span>
-          <span id="sliderMovesCalc" class="text-slate-400">Est. 25 Moves</span>
+          <span id="sliderMovesCalc" class="text-slate-400">Est. 11 Moves</span>
           <span>30x30</span>
         </div>
       </div>
@@ -337,7 +368,7 @@
           <h4 class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">High Score (Fewest Moves)</h4>
           <div class="space-y-1.5 text-xs">
             <div class="flex justify-between items-center bg-slate-950/20 px-3 py-2 rounded border border-slate-800">
-              <span class="text-slate-300">Active Grid Size (<span id="activeStatsSizeText" class="mono text-indigo-300">14x14</span>)</span>
+              <span class="text-slate-300">Active Grid Size (<span id="activeStatsSizeText" class="mono text-indigo-300">4x4</span>)</span>
               <span id="activeStatsBestScore" class="font-bold text-white mono">-</span>
             </div>
           </div>
@@ -466,8 +497,9 @@
     // System Variables
     let currentMode = 'classic'; // 'classic', 'zen', 'vs'
     let currentTheme = 'classic';
-    let size = 14; // Default starting size
-    let maxMoves = 25;
+    let colorCount = 5; // Number of distinct colors in play (4 = easiest, 6 = hardest)
+    let size = 4; // Default starting size (grows by 1 after every victory)
+    let maxMoves = 11;
     let grid = [];
     let initialGrid = [];
     let movesCount = 0;
@@ -479,10 +511,10 @@
     let cpuTerritory = [];    // array of {r, c} strings "r,c"
     let activeTurn = 'player'; // 'player' or 'cpu'
 
-    // Compute dynamic move count scaling linearly with grid size
+    // Compute dynamic move count scaling with grid size (generous / forgiving)
     function calculateMaxMoves(gridSize) {
-      // Linear progression formula designed for balanced pacing
-      return Math.floor(1.75 * gridSize) + 1;
+      // More forgiving than a tight optimal solve, so the puzzle stays fun
+      return Math.round(gridSize * 1.9) + 3;
     }
 
     // Dynamic slider preview support
@@ -521,7 +553,7 @@
       for (let r = 0; r < size; r++) {
         let row = [];
         for (let c = 0; c < size; c++) {
-          row.push(Math.floor(Math.random() * 6));
+          row.push(Math.floor(Math.random() * colorCount));
         }
         grid.push(row);
       }
@@ -543,7 +575,7 @@
         
         // Ensure starting cells don't have the same color
         if (grid[0][0] === grid[size-1][size-1]) {
-          grid[size-1][size-1] = (grid[0][0] + 1) % 6;
+          grid[size-1][size-1] = (grid[0][0] + 1) % colorCount;
         }
 
         activeTurn = 'player';
@@ -644,7 +676,7 @@
       paletteContainer.innerHTML = '';
       const themeColors = THEMES[currentTheme];
 
-      themeColors.forEach((colorObj, idx) => {
+      themeColors.slice(0, colorCount).forEach((colorObj, idx) => {
         const btn = document.createElement('button');
         btn.className = 'w-10 h-10 sm:w-12 sm:h-12 rounded-xl border border-slate-950/20 active:scale-90 transition-transform shadow-md relative flex items-center justify-center font-extrabold text-black/35 text-xs';
         btn.style.backgroundColor = colorObj.color;
@@ -658,6 +690,11 @@
             btn.classList.add('opacity-10');
             btn.disabled = true;
           }
+        } else if (idx === grid[0][0]) {
+          // Mark the color you're currently flooded with so your state is obvious
+          btn.style.outline = '3px solid rgba(255,255,255,0.85)';
+          btn.style.outlineOffset = '2px';
+          btn.disabled = true;
         }
 
         btn.onclick = () => {
@@ -817,7 +854,7 @@
       let bestColor = -1;
       let maxCaptured = -1;
 
-      for (let colorIdx = 0; colorIdx < 6; colorIdx++) {
+      for (let colorIdx = 0; colorIdx < colorCount; colorIdx++) {
         if (colorIdx === p1Color || colorIdx === cpuColor) continue;
 
         // Run simulation
@@ -850,7 +887,7 @@
 
       // Default fallback if no expansion option is found
       if (bestColor === -1) {
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < colorCount; i++) {
           if (i !== p1Color && i !== cpuColor) {
             bestColor = i;
             break;
@@ -917,6 +954,21 @@
 
         const pct = ((floodedCount / totalTiles) * 100).toFixed(1);
         document.getElementById('scoreDisplay').innerText = `${pct}%`;
+
+        // Warn when moves are running low (classic mode only)
+        const moveEl = document.getElementById('moveCount');
+        if (currentMode === 'classic') {
+          const remaining = maxMoves - movesCount;
+          if (remaining <= 2) {
+            moveEl.className = 'text-xl font-bold text-rose-400 mono';
+          } else if (remaining <= 5) {
+            moveEl.className = 'text-xl font-bold text-amber-400 mono';
+          } else {
+            moveEl.className = 'text-xl font-bold text-white mono';
+          }
+        } else {
+          moveEl.className = 'text-xl font-bold text-white mono';
+        }
       }
     }
 
@@ -1180,6 +1232,120 @@
       initGame();
     }
 
+    // ---------- Difficulty: number of colors ----------
+    function selectColorCount(n) {
+      [4, 5, 6].forEach(c => {
+        const btn = document.getElementById(`colors-${c}`);
+        btn.className = "py-2 rounded-lg text-xs font-bold border transition bg-slate-950/40 border-slate-800 text-slate-300";
+      });
+      const active = document.getElementById(`colors-${n}`);
+      active.className = "py-2 rounded-lg text-xs font-bold border transition bg-[#33b5e5]/10 border-[#33b5e5]/60 text-white shadow-sm shadow-[#33b5e5]/10";
+      colorCount = n;
+      initGame();
+    }
+
+    // ---------- Hint engine: suggest the best next color ----------
+    // Count the size of the region connected to the top-left corner that shares `color`.
+    function countConnectedFromOrigin(g, color) {
+      if (g[0][0] !== color) return 0;
+      const n = g.length;
+      const stack = [[0, 0]];
+      const seen = new Set(['0,0']);
+      let count = 0;
+      while (stack.length) {
+        const [r, c] = stack.pop();
+        count++;
+        for (const [nr, nc] of [[r+1,c],[r-1,c],[r,c+1],[r,c-1]]) {
+          if (nr >= 0 && nr < n && nc >= 0 && nc < n) {
+            const k = `${nr},${nc}`;
+            if (!seen.has(k) && g[nr][nc] === color) { seen.add(k); stack.push([nr, nc]); }
+          }
+        }
+      }
+      return count;
+    }
+
+    // Simulate flooding the corner region with `color`, return resulting flooded size.
+    function simulateFloodSize(g, color) {
+      const origin = g[0][0];
+      if (origin === color) return countConnectedFromOrigin(g, color);
+      const n = g.length;
+      const stack = [[0, 0]];
+      const seen = new Set(['0,0']);
+      const region = [];
+      while (stack.length) {
+        const [r, c] = stack.pop();
+        region.push([r, c]);
+        for (const [nr, nc] of [[r+1,c],[r-1,c],[r,c+1],[r,c-1]]) {
+          if (nr >= 0 && nr < n && nc >= 0 && nc < n) {
+            const k = `${nr},${nc}`;
+            if (!seen.has(k) && g[nr][nc] === origin) { seen.add(k); stack.push([nr, nc]); }
+          }
+        }
+      }
+      region.forEach(([r, c]) => { g[r][c] = color; });
+      return countConnectedFromOrigin(g, color);
+    }
+
+    // Greedy best color for classic/zen flood.
+    function getBestFloodColor() {
+      const origin = grid[0][0];
+      let best = -1, bestGain = -1;
+      for (let c = 0; c < colorCount; c++) {
+        if (c === origin) continue;
+        const temp = grid.map(row => [...row]);
+        const gain = simulateFloodSize(temp, c);
+        if (gain > bestGain) { bestGain = gain; best = c; }
+      }
+      return best;
+    }
+
+    // Greedy best expansion color for the player in VS mode.
+    function getBestVsColor() {
+      const p1Color = grid[0][0];
+      const cpuColor = grid[size-1][size-1];
+      let best = -1, maxCaptured = -1;
+      for (let colorIdx = 0; colorIdx < colorCount; colorIdx++) {
+        if (colorIdx === p1Color || colorIdx === cpuColor) continue;
+        let visited = new Set(playerTerritory);
+        let queue = [...playerTerritory];
+        while (queue.length > 0) {
+          const [r, c] = queue.shift().split(',').map(Number);
+          for (const [nr, nc] of [[r+1,c],[r-1,c],[r,c+1],[r,c-1]]) {
+            if (nr >= 0 && nr < size && nc >= 0 && nc < size) {
+              const key = `${nr},${nc}`;
+              if (!visited.has(key) && grid[nr][nc] === colorIdx && !cpuTerritory.includes(key)) {
+                visited.add(key); queue.push(key);
+              }
+            }
+          }
+        }
+        if (visited.size > maxCaptured) { maxCaptured = visited.size; best = colorIdx; }
+      }
+      return best;
+    }
+
+    function showHint() {
+      if (gameEnded) return;
+      if (currentMode === 'vs' && activeTurn !== 'player') return;
+
+      const best = currentMode === 'vs' ? getBestVsColor() : getBestFloodColor();
+      if (best < 0) return;
+
+      playSynthSound('click');
+      triggerHaptic(8);
+
+      // Highlight the suggested palette button (palette renders one button per color, in order)
+      const buttons = document.getElementById('colorPalette').children;
+      const target = buttons[best];
+      if (target) {
+        target.classList.remove('hint-glow');
+        void target.offsetWidth; // restart animation
+        target.classList.add('hint-glow');
+        setTimeout(() => target.classList.remove('hint-glow'), 2900);
+      }
+    }
+
     function selectPalette(theme) {
       currentTheme = theme;
       renderBoard();
@@ -1210,6 +1376,7 @@
     // Engine On-Load Init Entry
     window.onload = function() {
       // Highlight initial modes
+      selectColorCount(colorCount);
       selectGameMode('classic');
       updateSliderLabel(size);
     }
