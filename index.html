@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Heine Family Games</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bungee&family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #0b0d13;
+      --bg-soft:  #10131c;
+      --panel:    #151926;
+      --line:     #232838;
+      --ink:      #eef1f8;
+      --muted:    #868da4;
+      --cyan:     #33b5e5;
+      --cyan-lit: #6fd6ff;
+      --amber:    #ffc24b;
+      --magenta:  #ff5d8f;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background:
+        radial-gradient(1200px 600px at 50% -200px, rgba(51,181,229,0.10), transparent 60%),
+        var(--bg);
+      color: var(--ink);
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      line-height: 1.55;
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* faint scanline atmosphere — the home-CRT cue */
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.018) 0px,
+        rgba(255,255,255,0.018) 1px,
+        transparent 1px,
+        transparent 3px
+      );
+      z-index: 100;
+      mix-blend-mode: overlay;
+    }
+
+    .wrap { width: min(1080px, 92vw); margin: 0 auto; }
+
+    /* ============== MARQUEE (the signature) ============== */
+    .marquee-shell { padding: clamp(2.5rem, 7vw, 5rem) 0 clamp(1.5rem, 4vw, 3rem); }
+
+    .marquee {
+      position: relative;
+      background: linear-gradient(180deg, #181c2a, #0e1119);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      padding: clamp(2rem, 5vw, 3.4rem) clamp(1rem, 4vw, 3rem);
+      text-align: center;
+      box-shadow:
+        0 0 0 1px rgba(51,181,229,0.10),
+        0 30px 80px -30px rgba(0,0,0,0.9),
+        inset 0 1px 0 rgba(255,255,255,0.04);
+      overflow: hidden;
+    }
+
+    /* lightbulb strips top and bottom */
+    .bulbs {
+      position: absolute;
+      left: 14px; right: 14px;
+      height: 10px;
+      background-image: radial-gradient(circle, var(--amber) 0 2.4px, rgba(255,194,75,0.12) 2.6px 4px, transparent 4.2px);
+      background-size: 22px 10px;
+      background-repeat: repeat-x;
+      background-position: center;
+      filter: drop-shadow(0 0 5px rgba(255,194,75,0.6));
+      animation: bulbGlow 2.4s ease-in-out infinite;
+    }
+    .bulbs.top { top: 12px; }
+    .bulbs.bot { bottom: 12px; }
+    .bulbs.bot { animation-delay: 1.2s; }
+
+    @keyframes bulbGlow {
+      0%, 100% { opacity: 0.55; }
+      50%      { opacity: 1; }
+    }
+
+    .eyebrow {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--cyan);
+      margin-bottom: 1rem;
+    }
+
+    .wordmark {
+      font-family: 'Bungee', cursive;
+      line-height: 0.92;
+      font-size: clamp(2.4rem, 9vw, 5.4rem);
+      letter-spacing: 0.01em;
+    }
+    .wordmark .heine  { color: var(--cyan);   text-shadow: 0 0 18px rgba(51,181,229,0.55); }
+    .wordmark .family { color: var(--ink); }
+    .wordmark .games  { color: var(--amber);  text-shadow: 0 0 18px rgba(255,194,75,0.5); }
+
+    .tagline {
+      margin-top: 1.3rem;
+      max-width: 46ch;
+      margin-left: auto; margin-right: auto;
+      color: var(--muted);
+      font-size: clamp(0.95rem, 2.2vw, 1.1rem);
+    }
+
+    .startline {
+      margin-top: 1.6rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.78rem;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--amber);
+      animation: blink 1.4s steps(1) infinite;
+    }
+    @keyframes blink { 0%,55% {opacity:1;} 56%,100% {opacity:0.18;} }
+
+    /* ============== SHELF ============== */
+    .shelf { padding: clamp(2rem, 5vw, 3.5rem) 0 4rem; }
+
+    .shelf-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 1rem;
+      margin-bottom: 1.6rem;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 0.9rem;
+    }
+    .shelf-head h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.15rem, 3.5vw, 1.5rem);
+      letter-spacing: -0.01em;
+    }
+    .shelf-head .count {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1.1rem;
+    }
+
+    /* ============== CABINET CARD ============== */
+    .cabinet {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+    .cabinet.live { cursor: pointer; }
+    .cabinet.live:hover,
+    .cabinet.live:focus-visible {
+      transform: translateY(-5px);
+      border-color: var(--accent);
+      box-shadow: 0 18px 40px -18px rgba(0,0,0,0.8), 0 0 0 1px var(--accent);
+      outline: none;
+    }
+    .cabinet.soon { opacity: 0.72; }
+
+    /* the cabinet "screen" */
+    .screen {
+      position: relative;
+      aspect-ratio: 16 / 10;
+      background: #07090e;
+      border-bottom: 1px solid var(--line);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .screen::after {
+      content: "";
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0 2px, rgba(0,0,0,0.22) 2px 4px);
+      pointer-events: none;
+    }
+
+    /* live mini color-grid preview for Coloroid */
+    .mini {
+      display: grid;
+      gap: 2px;
+      width: 64%;
+      aspect-ratio: 1;
+      border-radius: 6px;
+      overflow: hidden;
+      box-shadow: 0 0 22px rgba(51,181,229,0.25);
+    }
+    .mini > i { display: block; animation: shimmer 4s ease-in-out infinite; }
+    @keyframes shimmer { 0%,100% { filter: brightness(1); } 50% { filter: brightness(1.18); } }
+
+    /* "no signal" placeholder screen */
+    .nosignal {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--accent);
+      text-align: center;
+      animation: blink 1.6s steps(1) infinite;
+    }
+
+    .cab-body { padding: 1rem 1.05rem 1.15rem; display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
+
+    .cab-top { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
+    .cab-name { font-weight: 700; font-size: 1.12rem; letter-spacing: -0.01em; }
+
+    .chip {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      padding: 0.22rem 0.5rem;
+      border-radius: 999px;
+      white-space: nowrap;
+    }
+    .chip.live { color: var(--amber); border: 1px solid rgba(255,194,75,0.4); background: rgba(255,194,75,0.08); }
+    .chip.soon { color: var(--muted); border: 1px solid var(--line); }
+
+    .cab-tag {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+    .cab-desc { color: var(--muted); font-size: 0.9rem; flex: 1; }
+
+    .cab-cta {
+      margin-top: 0.4rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.74rem;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--accent);
+    }
+    .cabinet.live:hover .cab-cta .arrow { transform: translateX(4px); }
+    .cab-cta .arrow { transition: transform 0.18s ease; }
+    .cab-cta.muted { color: var(--muted); }
+
+    /* ============== FOOTER ============== */
+    footer {
+      border-top: 1px solid var(--line);
+      padding: 2rem 0 3rem;
+    }
+    .foot-inner {
+      display: flex; flex-wrap: wrap; gap: 0.6rem 1.5rem;
+      align-items: center; justify-content: space-between;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .foot-inner .mark { color: var(--cyan); }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; scroll-behavior: auto; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+
+    <!-- ============== MARQUEE ============== -->
+    <div class="marquee-shell">
+      <header class="marquee">
+        <div class="bulbs top"></div>
+        <p class="eyebrow">Home Arcade &bull; Built at the kitchen table</p>
+        <h1 class="wordmark">
+          <span class="heine">HEINE</span>
+          <span class="family">FAMILY</span>
+          <span class="games">GAMES</span>
+        </h1>
+        <p class="tagline">A tiny family studio making small games and coding experiments. Pick a cabinet and play.</p>
+        <p class="startline">&#9654; Insert coin to begin</p>
+        <div class="bulbs bot"></div>
+      </header>
+    </div>
+
+    <!-- ============== SHELF ============== -->
+    <section class="shelf">
+      <div class="shelf-head">
+        <h2>Cabinet select</h2>
+        <span class="count" id="shelfCount">&mdash;</span>
+      </div>
+      <div class="grid" id="grid"></div>
+    </section>
+
+  </div>
+
+  <!-- ============== FOOTER ============== -->
+  <footer>
+    <div class="wrap foot-inner">
+      <span><span class="mark">&#9632;</span> Heine Family Games</span>
+      <span id="year"></span>
+    </div>
+  </footer>
+
+  <script>
+    // ---- Add a project here and it shows up on the shelf. ----
+    // status: 'live'  -> playable, links to href
+    //         'soon'  -> reserved slot, not clickable
+    const projects = [
+      {
+        name: 'Coloroid',
+        tag: 'Flood puzzle',
+        desc: 'Flood the board one color at a time. Starts at 4\u00d74 and grows one level bigger with every win.',
+        status: 'live',
+        href: './coloroid/',
+        accent: '#33b5e5',
+        preview: 'coloroid'
+      },
+      {
+        name: 'Next cabinet',
+        tag: 'On the workbench',
+        desc: 'An empty slot, reserved for whatever the family builds next.',
+        status: 'soon',
+        accent: '#ff5d8f'
+      },
+      {
+        name: 'Next cabinet',
+        tag: 'On the workbench',
+        desc: 'Another open slot. Edit the projects list to drop a new game in here.',
+        status: 'soon',
+        accent: '#ffc24b'
+      }
+    ];
+
+    // Coloroid palette, reused for the mini animated preview
+    const COLOROID_COLORS = ['#e53935','#43a047','#1e88e5','#fdd835','#8e24aa','#fb8c00'];
+
+    function makeMiniGrid() {
+      const n = 6;
+      const mini = document.createElement('div');
+      mini.className = 'mini';
+      mini.style.gridTemplateColumns = `repeat(${n}, 1fr)`;
+      for (let i = 0; i < n * n; i++) {
+        const cell = document.createElement('i');
+        cell.style.background = COLOROID_COLORS[Math.floor(Math.random() * COLOROID_COLORS.length)];
+        cell.style.animationDelay = (Math.random() * 4).toFixed(2) + 's';
+        mini.appendChild(cell);
+      }
+      return mini;
+    }
+
+    function buildScreen(p) {
+      const screen = document.createElement('div');
+      screen.className = 'screen';
+      if (p.preview === 'coloroid') {
+        screen.appendChild(makeMiniGrid());
+      } else {
+        const ns = document.createElement('div');
+        ns.className = 'nosignal';
+        ns.textContent = 'No signal';
+        screen.appendChild(ns);
+      }
+      return screen;
+    }
+
+    function buildCabinet(p) {
+      const live = p.status === 'live';
+      const el = document.createElement(live ? 'a' : 'div');
+      el.className = 'cabinet ' + (live ? 'live' : 'soon');
+      el.style.setProperty('--accent', p.accent);
+      if (live) {
+        el.href = p.href;
+        el.setAttribute('aria-label', 'Play ' + p.name);
+      }
+
+      el.appendChild(buildScreen(p));
+
+      const body = document.createElement('div');
+      body.className = 'cab-body';
+      body.innerHTML = `
+        <div class="cab-top">
+          <span class="cab-name">${p.name}</span>
+          <span class="chip ${live ? 'live' : 'soon'}">${live ? 'Playable' : 'Coming soon'}</span>
+        </div>
+        <span class="cab-tag">${p.tag}</span>
+        <p class="cab-desc">${p.desc}</p>
+        <span class="cab-cta ${live ? '' : 'muted'}">
+          ${live ? 'Play now <span class="arrow">&rarr;</span>' : 'Insert coin'}
+        </span>`;
+      el.appendChild(body);
+      return el;
+    }
+
+    const grid = document.getElementById('grid');
+    projects.forEach(p => grid.appendChild(buildCabinet(p)));
+
+    const liveCount = projects.filter(p => p.status === 'live').length;
+    document.getElementById('shelfCount').textContent =
+      `${liveCount} playable / ${projects.length} on the shelf`;
+
+    document.getElementById('year').textContent = new Date().getFullYear();
+  </script>
+</body>
+</html>
