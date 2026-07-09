@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Skull King — Scorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English+SC&family=Barlow+Semi+Condensed:wght@400;500;600&family=Karla:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  :root {
+    --abyss:#071B22; --deep:#0D2C35; --brass:#C9973F;
+    --bone:#E8DFC9; --verdigris:#4E8C7D; --blood:#B5433A;
+  }
+  body {
+    margin:0; padding:0 0 120px; min-height:100vh; color:var(--bone);
+    background:radial-gradient(120% 80% at 50% -10%, #10333D 0%, var(--abyss) 60%) fixed;
+    font-family:'Karla',system-ui,sans-serif;
+  }
+  .wrap { max-width:600px; margin:0 auto; padding:0 16px; }
+
+  header.top {
+    position:sticky; top:0; z-index:5; text-align:center; padding:18px 16px 14px;
+    background:linear-gradient(180deg, rgba(7,27,34,.98) 70%, rgba(7,27,34,0));
+  }
+  h1 {
+    font-family:'IM Fell English SC',Georgia,serif; font-size:30px; letter-spacing:.04em;
+    margin:0; text-shadow:0 2px 0 rgba(0,0,0,.5);
+  }
+  .rule { display:flex; align-items:center; gap:10px; margin-top:8px; }
+  .rule span { height:1px; flex:1; background:linear-gradient(90deg,transparent,var(--brass),transparent); opacity:.55; }
+  .rule b {
+    font-family:'Barlow Semi Condensed',sans-serif; font-weight:500; font-size:11px;
+    letter-spacing:.22em; text-transform:uppercase; color:var(--brass);
+  }
+
+  .card {
+    background:linear-gradient(180deg, var(--deep), #0A242C);
+    border:1px solid rgba(201,151,63,.22); border-radius:3px; padding:14px; margin-bottom:12px;
+  }
+  .name { font-family:'IM Fell English SC',Georgia,serif; font-size:19px; }
+  .row-head { display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:10px; }
+  .tag {
+    font-family:'Barlow Semi Condensed',sans-serif; font-size:11px; letter-spacing:.18em;
+    text-transform:uppercase; color:rgba(232,223,201,.5);
+  }
+  .proj { font-family:'Barlow Semi Condensed',sans-serif; font-size:20px; font-weight:600; }
+  .pos { color:var(--verdigris); } .neg { color:var(--blood); }
+
+  .pips { display:flex; flex-wrap:wrap; gap:6px; }
+  .pip {
+    font-family:'Barlow Semi Condensed',sans-serif; font-size:17px; font-weight:500;
+    min-width:38px; height:38px; border-radius:2px; cursor:pointer;
+    background:rgba(255,255,255,.03); color:rgba(232,223,201,.75);
+    border:1px solid rgba(232,223,201,.16); transition:transform .12s ease, background .12s ease;
+  }
+  .pip:hover { background:rgba(201,151,63,.12); }
+  .pip[aria-pressed="true"] { background:var(--brass); color:#0A1F26; border-color:var(--brass); font-weight:600; transform:translateY(-1px); }
+  .pip.zero[aria-pressed="true"] { background:var(--bone); border-color:var(--bone); }
+
+  .bonus { margin-top:12px; padding-top:11px; border-top:1px dashed rgba(232,223,201,.15); }
+  .chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:7px; }
+  .chip {
+    font:400 11px 'Karla',sans-serif; padding:6px 9px; border-radius:999px; cursor:pointer;
+    background:transparent; color:rgba(232,223,201,.7); border:1px solid rgba(232,223,201,.2);
+  }
+  .chip:hover { border-color:var(--brass); color:var(--brass); }
+  .chip.clear { border-color:rgba(181,67,58,.5); color:rgba(181,67,58,.9); }
+  .bonusval { font-family:'Barlow Semi Condensed',sans-serif; font-size:15px; color:var(--brass); }
+
+  .bar {
+    position:fixed; bottom:0; left:0; right:0; z-index:6; padding:22px 16px 18px;
+    background:linear-gradient(180deg, rgba(7,27,34,0), rgba(7,27,34,.97) 35%);
+  }
+  .bar-in { max-width:600px; margin:0 auto; display:flex; gap:8px; }
+  button.act {
+    font-family:'Barlow Semi Condensed',sans-serif; letter-spacing:.14em; text-transform:uppercase;
+    font-size:13px; font-weight:600; padding:14px 18px; border-radius:2px; cursor:pointer; flex:1;
+    background:var(--brass); color:#08202A; border:1px solid var(--brass);
+  }
+  button.act:disabled { opacity:.35; cursor:not-allowed; }
+  button.ghost { background:transparent; color:var(--bone); border:1px solid rgba(232,223,201,.28); flex:0 0 auto; }
+
+  .warn {
+    font-family:'Barlow Semi Condensed',sans-serif; font-size:12px; text-align:center;
+    color:var(--brass); letter-spacing:.08em; text-transform:uppercase; margin:0 0 10px;
+  }
+
+  input.text {
+    width:100%; background:rgba(0,0,0,.25); border:1px solid rgba(232,223,201,.18); color:var(--bone);
+    padding:12px; border-radius:2px; font:400 16px 'Karla',sans-serif;
+  }
+  input.text::placeholder { color:rgba(232,223,201,.3); }
+  .crewrow { display:flex; gap:8px; margin-bottom:8px; align-items:center; }
+  .num { font-family:'Barlow Semi Condensed',sans-serif; color:var(--brass); width:22px; font-size:15px; }
+  .x { background:none; border:none; color:rgba(232,223,201,.35); cursor:pointer; font-size:20px; padding:0 6px; }
+  .x:hover:not(:disabled) { color:var(--blood); }
+  .add {
+    width:100%; background:transparent; border:1px dashed rgba(232,223,201,.25); color:rgba(232,223,201,.6);
+    padding:11px; border-radius:2px; cursor:pointer; font:400 13px 'Karla',sans-serif;
+  }
+
+  .sea { display:flex; gap:10px; height:190px; margin:6px 0 4px; }
+  .col { flex:1; display:flex; flex-direction:column; min-width:0; }
+  .above { flex:1; display:flex; align-items:flex-end; }
+  .below { flex:1; display:flex; align-items:flex-start; }
+  .fill { width:100%; border-radius:1px; }
+  .fill.up { background:linear-gradient(180deg,var(--brass),rgba(201,151,63,.35)); }
+  .fill.down { background:linear-gradient(180deg,rgba(181,67,58,.4),var(--blood)); }
+  .water { height:1px; background:var(--bone); opacity:.55; }
+  .legend { display:flex; gap:10px; }
+  .lg { flex:1; text-align:center; min-width:0; }
+  .lg .n { font-size:11px; color:rgba(232,223,201,.65); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .lg .v { font-family:'Barlow Semi Condensed',sans-serif; font-size:17px; font-weight:600; }
+
+  table { width:100%; border-collapse:collapse; font-family:'Barlow Semi Condensed',sans-serif; }
+  th, td { padding:8px 5px; font-size:14px; text-align:center; }
+  th { color:var(--brass); font-weight:500; letter-spacing:.1em; text-transform:uppercase; font-size:10px; }
+  tbody tr { border-top:1px solid rgba(232,223,201,.08); }
+  td.r { text-align:left; color:rgba(232,223,201,.5); font-size:12px; letter-spacing:.08em; }
+  .cell b { font-weight:600; }
+  .cell small { display:block; color:rgba(232,223,201,.45); font-size:11px; }
+  .edit {
+    background:none; border:1px solid rgba(232,223,201,.2); color:rgba(232,223,201,.6);
+    font-size:10px; letter-spacing:.1em; text-transform:uppercase; padding:4px 7px; border-radius:2px; cursor:pointer;
+  }
+  .edit:hover { border-color:var(--brass); color:var(--brass); }
+
+  .foot { text-align:center; font-size:11px; color:rgba(232,223,201,.35); line-height:1.7; margin-top:14px; }
+  :focus-visible { outline:2px solid var(--brass); outline-offset:2px; }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <h1 id="title">Skull King</h1>
+  <div class="rule"><span></span><b id="subtitle">Muster the crew</b><span></span></div>
+</header>
+
+<main class="wrap" id="main"></main>
+
+<div class="bar"><div class="bar-in" id="bar"></div></div>
+
+<script>
+const ROUNDS = 10;
+const BONUSES = [
+  { v: 10, label: "14 of a suit" },
+  { v: 20, label: "Black 14" },
+  { v: 30, label: "Skull King takes a pirate" },
+  { v: 20, label: "Pirate takes a mermaid" },
+  { v: 50, label: "Mermaid takes Skull King" },
+];
+
+const S = {
+  phase: "setup",      // setup | play | final
+  step: "bid",         // bid | tally
+  ri: 0,
+  names: ["", "", ""],
+  players: [],
+  rounds: [],
+};
+
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
+const blank = () => ({ bid: null, tricks: null, bonus: 0 });
+
+function scoreOf(e, roundNum) {
+  if (e.bid === null || e.tricks === null) return 0;
+  if (e.bid === 0) return e.tricks === 0 ? 10 * roundNum + e.bonus : -10 * roundNum;
+  return e.bid === e.tricks ? 20 * e.bid + e.bonus : -10 * Math.abs(e.bid - e.tricks);
+}
+
+function totals() {
+  const t = {};
+  S.players.forEach((p) => (t[p.id] = 0));
+  S.rounds.forEach((r, i) => {
+    S.players.forEach((p) => {
+      const e = r[p.id];
+      if (e && e.bid !== null && e.tricks !== null) t[p.id] += scoreOf(e, i + 1);
+    });
+  });
+  return t;
+}
+
+function startGame() {
+  S.players = S.names.map((n, i) => ({ id: "p" + i, name: n.trim() || "Pirate " + (i + 1) }));
+  S.rounds = Array.from({ length: ROUNDS }, () =>
+    Object.fromEntries(S.players.map((p) => [p.id, blank()]))
+  );
+  S.ri = 0; S.step = "bid"; S.phase = "play";
+  render();
+}
+
+/* ---------- views ---------- */
+
+function setupView() {
+  const rows = S.names.map((n, i) => `
+    <div class="crewrow">
+      <div class="num">${i + 1}</div>
+      <input class="text" value="${esc(n)}" placeholder="Pirate ${i + 1}" maxlength="14" data-name="${i}">
+      <button class="x" data-drop="${i}" aria-label="Remove player ${i + 1}" ${S.names.length <= 2 ? "disabled" : ""}>&times;</button>
+    </div>`).join("");
+
+  main.innerHTML = `
+    <div class="card">
+      ${rows}
+      ${S.names.length < 8 ? '<button class="add" data-add>+ Add a player</button>' : ""}
+    </div>
+    <p class="foot">Ten rounds. Round 1 deals one card, round 10 deals ten.<br>
+    Bid exactly right to be paid; miss and walk the plank.</p>`;
+  bar.innerHTML = '<button class="act" data-start>Set sail</button>';
+}
+
+function playView() {
+  const rn = S.ri + 1;
+  const e = S.rounds[S.ri];
+  const t = totals();
+  const bidding = S.step === "bid";
+  const trickSum = S.players.reduce((s, p) => s + (e[p.id].tricks ?? 0), 0);
+  const tricksIn = S.players.every((p) => e[p.id].tricks !== null);
+  const bidsIn = S.players.every((p) => e[p.id].bid !== null);
+
+  title.textContent = "Round " + rn;
+  subtitle.textContent = bidding
+    ? `${rn} card${rn > 1 ? "s" : ""} · bids`
+    : `Tricks won · ${trickSum} of ${rn}`;
+
+  main.innerHTML = S.players.map((p) => {
+    const en = e[p.id];
+    const done = en.bid !== null && en.tricks !== null;
+    const pts = done ? scoreOf(en, rn) : null;
+    const pips = Array.from({ length: rn + 1 }, (_, n) => {
+      const on = bidding ? en.bid === n : en.tricks === n;
+      return `<button class="pip${n === 0 ? " zero" : ""}" aria-pressed="${on}" data-pip="${p.id}" data-val="${n}">${n}</button>`;
+    }).join("");
+
+    const bonus = bidding ? "" : `
+      <div class="bonus">
+        <div class="row-head" style="margin:0">
+          <div class="tag">Bonus points</div>
+          <div class="bonusval">+${en.bonus}</div>
+        </div>
+        <div class="chips">
+          ${BONUSES.map((b) => `<button class="chip" data-bonus="${p.id}" data-add-val="${b.v}">+${b.v} ${b.label}</button>`).join("")}
+          ${en.bonus > 0 ? `<button class="chip clear" data-bonus="${p.id}" data-add-val="clear">Clear</button>` : ""}
+        </div>
+      </div>`;
+
+    return `
+      <div class="card">
+        <div class="row-head">
+          <div>
+            <div class="name">${esc(p.name)}</div>
+            <div class="tag">${t[p.id]} total${!bidding && en.bid !== null ? " · bid " + en.bid : ""}</div>
+          </div>
+          ${!bidding && pts !== null ? `<div class="proj ${pts < 0 ? "neg" : "pos"}">${pts > 0 ? "+" : ""}${pts}</div>` : ""}
+        </div>
+        <div class="tag" style="margin-bottom:6px">${bidding ? "Tricks bid" : "Tricks taken"}</div>
+        <div class="pips">${pips}</div>
+        ${bonus}
+      </div>`;
+  }).join("")
+  + (!bidding && tricksIn && trickSum !== rn
+      ? `<p class="warn">${trickSum} tricks logged, ${rn} were dealt — check for a Kraken</p>` : "")
+  + ledger(t, S.ri);
+
+  const nextLabel = bidding ? "Lock in bids" : (S.ri === ROUNDS - 1 ? "Final tally" : "Score round " + rn);
+  bar.innerHTML = `
+    <button class="act ghost" data-back ${bidding && S.ri === 0 ? "disabled" : ""}>Back</button>
+    <button class="act" data-next ${(bidding ? bidsIn : tricksIn) ? "" : "disabled"}>${nextLabel}</button>`;
+}
+
+function finalView() {
+  const t = totals();
+  const ranked = [...S.players].sort((a, b) => t[b.id] - t[a.id]);
+  const max = Math.max(1, ...S.players.map((p) => Math.abs(t[p.id])));
+
+  title.textContent = ranked[0].name + " wins";
+  subtitle.textContent = t[ranked[0].id] + " points";
+
+  const cols = ranked.map((p) => {
+    const v = t[p.id], h = (Math.abs(v) / max) * 100;
+    return `<div class="col">
+      <div class="above">${v > 0 ? `<div class="fill up" style="height:${h}%"></div>` : ""}</div>
+      <div class="water"></div>
+      <div class="below">${v < 0 ? `<div class="fill down" style="height:${h}%"></div>` : ""}</div>
+    </div>`;
+  }).join("");
+
+  const legend = ranked.map((p) =>
+    `<div class="lg"><div class="v ${t[p.id] < 0 ? "neg" : "pos"}">${t[p.id]}</div><div class="n">${esc(p.name)}</div></div>`
+  ).join("");
+
+  main.innerHTML = `
+    <div class="card">
+      <div class="tag" style="margin-bottom:6px">The waterline</div>
+      <div class="sea">${cols}</div>
+      <div class="legend">${legend}</div>
+    </div>
+    ${ledger(t, ROUNDS - 1)}`;
+  bar.innerHTML = '<button class="act ghost" style="flex:1" data-reset>New game</button>';
+}
+
+function ledger(t, upTo) {
+  const played = S.rounds
+    .map((r, i) => ({ r, i }))
+    .filter(({ r, i }) => i <= upTo && S.players.every((p) => r[p.id].tricks !== null && r[p.id].bid !== null));
+  if (!played.length) return "";
+
+  const head = S.players.map((p) => `<th>${esc(p.name)}</th>`).join("");
+  const body = played.map(({ r, i }) => `
+    <tr>
+      <td class="r">${i + 1}</td>
+      ${S.players.map((p) => {
+        const pts = scoreOf(r[p.id], i + 1);
+        return `<td class="cell"><b class="${pts < 0 ? "neg" : "pos"}">${pts > 0 ? "+" : ""}${pts}</b><small>${r[p.id].bid}/${r[p.id].tricks}</small></td>`;
+      }).join("")}
+      <td><button class="edit" data-edit="${i}">Fix</button></td>
+    </tr>`).join("");
+  const foot = S.players.map((p) =>
+    `<td class="cell"><b style="font-size:17px" class="${t[p.id] < 0 ? "neg" : "pos"}">${t[p.id]}</b></td>`
+  ).join("");
+
+  return `<div class="card">
+    <div class="tag" style="margin-bottom:6px">Ship's ledger</div>
+    <table>
+      <thead><tr><th style="text-align:left">Rd</th>${head}<th></th></tr></thead>
+      <tbody>${body}<tr><td class="r" style="color:var(--brass)">Tot</td>${foot}<td></td></tr></tbody>
+    </table>
+  </div>`;
+}
+
+function render() {
+  if (S.phase === "setup") { title.textContent = "Skull King"; subtitle.textContent = "Muster the crew"; setupView(); }
+  else if (S.phase === "play") playView();
+  else finalView();
+}
+
+/* ---------- events ---------- */
+
+document.addEventListener("click", (ev) => {
+  const el = ev.target.closest("button");
+  if (!el || el.disabled) return;
+  const d = el.dataset;
+
+  if ("add" in d) { S.names.push(""); render(); }
+  else if (d.drop !== undefined) { S.names.splice(+d.drop, 1); render(); }
+  else if ("start" in d) startGame();
+  else if (d.pip) {
+    const e = S.rounds[S.ri][d.pip];
+    if (S.step === "bid") e.bid = +d.val; else e.tricks = +d.val;
+    render();
+  }
+  else if (d.bonus) {
+    const e = S.rounds[S.ri][d.bonus];
+    e.bonus = d.addVal === "clear" ? 0 : e.bonus + +d.addVal;
+    render();
+  }
+  else if ("back" in d) {
+    if (S.step === "tally") S.step = "bid";
+    else if (S.ri > 0) { S.ri--; S.step = "tally"; }
+    render();
+  }
+  else if ("next" in d) {
+    if (S.step === "bid") S.step = "tally";
+    else if (S.ri === ROUNDS - 1) S.phase = "final";
+    else { S.ri++; S.step = "bid"; }
+    window.scrollTo({ top: 0 });
+    render();
+  }
+  else if (d.edit !== undefined) { S.ri = +d.edit; S.step = "bid"; S.phase = "play"; window.scrollTo({ top: 0 }); render(); }
+  else if ("reset" in d) { S.phase = "setup"; S.rounds = []; render(); }
+});
+
+document.addEventListener("input", (ev) => {
+  if (ev.target.dataset.name !== undefined) S.names[+ev.target.dataset.name] = ev.target.value;
+});
+
+render();
+</script>
+</body>
+</html>
