@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Heads Up!</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #16123f;
+    --paper: #241d63;
+    --paper-deep: #16123f;
+    --pop: #ffd21f;
+    --go: #3ddc84;
+    --skip: #ff5d3b;
+    --white: #fdfcf7;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow: hidden; }
+  body {
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    background: var(--paper-deep);
+    color: var(--white);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .screen {
+    position: absolute; inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    text-align: center;
+  }
+  .screen.active { display: flex; }
+
+  /* ---------- HOME ---------- */
+  #home {
+    background:
+      radial-gradient(circle at 20% 15%, rgba(255,210,31,.14), transparent 40%),
+      radial-gradient(circle at 85% 85%, rgba(61,220,132,.12), transparent 45%),
+      var(--paper);
+    justify-content: flex-start;
+    padding-top: max(40px, env(safe-area-inset-top));
+    overflow-y: auto;
+  }
+  .logo {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(2.6rem, 11vw, 4.2rem);
+    line-height: .95;
+    letter-spacing: -.02em;
+    color: var(--pop);
+    transform: rotate(-3deg);
+    text-shadow: 4px 4px 0 var(--ink);
+    margin-bottom: 8px;
+  }
+  .tagline {
+    font-size: .95rem;
+    opacity: .75;
+    margin-bottom: 28px;
+    max-width: 300px;
+  }
+  .cats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    width: 100%;
+    max-width: 420px;
+    margin-bottom: 28px;
+  }
+  .cat {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 20px 10px;
+    border: 3px solid var(--white);
+    border-radius: 16px;
+    background: transparent;
+    color: var(--white);
+    cursor: pointer;
+    transition: transform .1s, background .15s, color .15s;
+  }
+  .cat .emoji { display: block; font-size: 1.7rem; margin-bottom: 6px; }
+  .cat.selected {
+    background: var(--pop);
+    color: var(--ink);
+    border-color: var(--pop);
+    transform: rotate(-1.5deg) scale(1.03);
+  }
+  .cat:active { transform: scale(.96); }
+
+  .btn-big {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 1.5rem;
+    letter-spacing: .02em;
+    padding: 18px 48px;
+    border-radius: 999px;
+    border: none;
+    background: var(--go);
+    color: var(--ink);
+    cursor: pointer;
+    box-shadow: 0 6px 0 #1d9c58;
+    transition: transform .08s, box-shadow .08s;
+  }
+  .btn-big:active { transform: translateY(4px); box-shadow: 0 2px 0 #1d9c58; }
+  .btn-big:disabled { opacity: .4; box-shadow: none; cursor: default; }
+
+  .tilt-row {
+    margin-top: 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: .85rem;
+    opacity: .85;
+  }
+  .tilt-row button {
+    font: inherit;
+    font-weight: 700;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 2px solid var(--white);
+    background: transparent;
+    color: var(--white);
+    cursor: pointer;
+  }
+  .tilt-row button.on { background: var(--go); border-color: var(--go); color: var(--ink); }
+
+  .howto {
+    margin-top: 22px;
+    font-size: .8rem;
+    line-height: 1.5;
+    opacity: .6;
+    max-width: 330px;
+    padding-bottom: 30px;
+  }
+
+  /* ---------- COUNTDOWN ---------- */
+  #countdown { background: var(--paper); }
+  #countNum {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 9rem;
+    color: var(--pop);
+    text-shadow: 6px 6px 0 var(--ink);
+    animation: pop .9s infinite;
+  }
+  #countHint { font-size: 1.1rem; margin-top: 12px; opacity: .8; }
+  @keyframes pop {
+    0% { transform: scale(.5); opacity: 0; }
+    30% { transform: scale(1.1); opacity: 1; }
+    60% { transform: scale(1); }
+    100% { transform: scale(1); opacity: .9; }
+  }
+
+  /* ---------- GAME ---------- */
+  #game { background: var(--paper); transition: background .15s; padding: 0; }
+  #game.flash-go { background: var(--go); }
+  #game.flash-skip { background: var(--skip); }
+  #timerBar {
+    position: absolute; top: 0; left: 0;
+    height: 10px;
+    background: var(--pop);
+    width: 100%;
+    transition: width 1s linear;
+  }
+  #timerText {
+    position: absolute;
+    top: max(20px, env(safe-area-inset-top));
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 2rem;
+    color: var(--pop);
+    text-shadow: 3px 3px 0 var(--ink);
+  }
+  #word {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(2.4rem, 12vw, 6rem);
+    line-height: 1.05;
+    padding: 0 20px;
+    text-shadow: 5px 5px 0 var(--ink);
+    transform: rotate(-2deg);
+    max-width: 95vw;
+    word-wrap: break-word;
+  }
+  #feedback {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: clamp(3rem, 14vw, 7rem);
+    color: var(--ink);
+    display: none;
+  }
+  .zones {
+    position: absolute; inset: 0;
+    display: flex;
+  }
+  .zone { flex: 1; display: flex; align-items: flex-end; justify-content: center; padding-bottom: max(26px, env(safe-area-inset-bottom)); }
+  .zone-label {
+    font-weight: 700;
+    font-size: .8rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 2px dashed rgba(253,252,247,.5);
+    opacity: .7;
+  }
+  #zoneSkip .zone-label { color: #ffb5a3; border-color: rgba(255,93,59,.6); }
+  #zoneGo .zone-label { color: #a9f5cd; border-color: rgba(61,220,132,.6); }
+
+  /* ---------- RESULTS ---------- */
+  #results {
+    background:
+      radial-gradient(circle at 80% 10%, rgba(255,210,31,.15), transparent 45%),
+      var(--paper);
+    justify-content: flex-start;
+    padding-top: max(48px, env(safe-area-inset-top));
+    overflow-y: auto;
+  }
+  .score-big {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 5.5rem;
+    color: var(--go);
+    text-shadow: 5px 5px 0 var(--ink);
+    line-height: 1;
+  }
+  .score-label {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 24px;
+    color: var(--pop);
+  }
+  .word-list {
+    width: 100%;
+    max-width: 380px;
+    margin-bottom: 28px;
+    text-align: left;
+  }
+  .word-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 9px 16px;
+    border-radius: 10px;
+    margin-bottom: 6px;
+    font-weight: 500;
+    background: rgba(253,252,247,.07);
+  }
+  .word-item.got { border-left: 5px solid var(--go); }
+  .word-item.miss { border-left: 5px solid var(--skip); opacity: .7; }
+  .word-item span:last-child { font-weight: 700; }
+  .word-item.got span:last-child { color: var(--go); }
+  .word-item.miss span:last-child { color: var(--skip); }
+  .results-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; padding-bottom: 40px; }
+  .btn-ghost {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    padding: 16px 28px;
+    border-radius: 999px;
+    border: 3px solid var(--white);
+    background: transparent;
+    color: var(--white);
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div class="screen active" id="home">
+  <div class="logo">HEADS<br>UP!</div>
+  <p class="tagline">Hold the phone to your forehead. Friends shout clues. Guess the word!</p>
+  <div class="cats" id="cats"></div>
+  <button class="btn-big" id="startBtn" disabled>PICK A DECK</button>
+  <div class="tilt-row">
+    <span>Tilt controls (phone)</span>
+    <button id="tiltBtn">Enable</button>
+  </div>
+  <p class="howto">
+    <strong>How to play:</strong> tilt the phone <em>down</em> (or tap the right side) when you guess it,
+    tilt <em>up</em> (or tap the left side) to pass. 60 seconds per round.
+  </p>
+</div>
+
+<!-- COUNTDOWN -->
+<div class="screen" id="countdown">
+  <div id="countNum">3</div>
+  <div id="countHint">Phone to your forehead! 📱</div>
+</div>
+
+<!-- GAME -->
+<div class="screen" id="game">
+  <div id="timerBar"></div>
+  <div id="timerText">60</div>
+  <div id="word">WORD</div>
+  <div id="feedback"></div>
+  <div class="zones">
+    <div class="zone" id="zoneSkip"><span class="zone-label">← Tap to pass</span></div>
+    <div class="zone" id="zoneGo"><span class="zone-label">Tap if correct →</span></div>
+  </div>
+</div>
+
+<!-- RESULTS -->
+<div class="screen" id="results">
+  <div class="score-big" id="finalScore">0</div>
+  <div class="score-label" id="scoreLabel">CORRECT</div>
+  <div class="word-list" id="wordList"></div>
+  <div class="results-btns">
+    <button class="btn-big" id="againBtn">PLAY AGAIN</button>
+    <button class="btn-ghost" id="homeBtn">Change deck</button>
+  </div>
+</div>
+
+<script>
+const DECKS = {
+  animals: { name: "Animals", emoji: "🦁", words: ["Elephant","Penguin","Kangaroo","Octopus","Giraffe","Sloth","Flamingo","T-Rex","Hamster","Great White Shark","Bald Eagle","Platypus","Raccoon","Chameleon","Hippo","Jellyfish","Peacock","Skunk","Llama","Owl","Dolphin","Porcupine","Gorilla","Seahorse","Anteater","Cheetah","Walrus","Toucan","Hedgehog","Komodo Dragon"] },
+  movies: { name: "Movies & TV", emoji: "🎬", words: ["Jurassic Park","Finding Nemo","Star Wars","The Office","Titanic","Shrek","Harry Potter","Jaws","Frozen","Stranger Things","The Lion King","Back to the Future","SpongeBob","Toy Story","Indiana Jones","Home Alone","The Simpsons","Ghostbusters","Pirates of the Caribbean","E.T.","Breaking Bad","The Matrix","Rocky","Spider-Man","Forrest Gump","Wednesday","Batman","Elf","Top Gun","Scooby-Doo"] },
+  food: { name: "Food & Drink", emoji: "🍕", words: ["Pizza","Tacos","Spaghetti","Ice Cream Sundae","Guacamole","Cheeseburger","Sushi","Pancakes","Popcorn","Hot Dog","Mac and Cheese","Nachos","Ramen","Donut","Bubble Tea","Grilled Cheese","Burrito","Cotton Candy","French Fries","Milkshake","Pretzel","Cinnamon Roll","Chicken Wings","Root Beer Float","Corn on the Cob","Peanut Butter","Waffles","Lasagna","S'mores","Bagel"] },
+  people: { name: "Famous Folks", emoji: "⭐", words: ["Superhero","Pirate","Rock Star","Astronaut","Ninja","Chef","Cowboy","Mad Scientist","Ballerina","Wizard","Firefighter","Vampire","Cheerleader","Detective","Robot","Clown","Knight","Mermaid","Zombie","Race Car Driver","Lifeguard","Magician","Viking","Opera Singer","Spy","Caveman","Weather Reporter","Gladiator","Mime","Game Show Host"] },
+  actions: { name: "Act It Out", emoji: "🎭", words: ["Brushing Teeth","Riding a Horse","Swimming","Juggling","Shoveling Snow","Karate Chop","Fishing","Playing Drums","Milking a Cow","Bowling","Changing a Diaper","Ironing","Walking a Dog","Golfing","Sneezing","Making Pizza Dough","Jump Rope","Rock Climbing","Texting","Painting a Wall","Slam Dunk","Rowing a Boat","Blowing Out Candles","Snowboarding","Playing Violin","Mowing the Lawn","Taking a Selfie","Yoga","Air Guitar","Building a Sandcastle"] },
+  random: { name: "Grab Bag", emoji: "🎲", words: ["Rainbow","Volcano","Roller Coaster","Bigfoot","Time Machine","Treehouse","Tornado","Disco Ball","Submarine","Haunted House","Fireworks","Quicksand","Igloo","Hot Air Balloon","Traffic Jam","Black Hole","Ferris Wheel","Piñata","Lighthouse","Snow Day","Garage Sale","Full Moon","Campfire","Waterslide","Fortune Cookie","Escalator","Thunderstorm","Vending Machine","Photo Booth","Lava Lamp"] }
+};
+
+const ROUND_SECONDS = 60;
+let selectedDeck = null;
+let tiltEnabled = false;
+let gameActive = false;
+let deckWords = [];
+let currentWord = "";
+let score = 0;
+let history = [];
+let timeLeft = ROUND_SECONDS;
+let timerId = null;
+let tiltReady = true; // debounce for orientation
+
+const $ = id => document.getElementById(id);
+const screens = ["home","countdown","game","results"];
+function show(id) {
+  screens.forEach(s => $(s).classList.toggle("active", s === id));
+}
+
+/* ---- sounds ---- */
+let audioCtx = null;
+function beep(freq, dur = .12, type = "square", vol = .15) {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(.001, audioCtx.currentTime + dur);
+    o.connect(g); g.connect(audioCtx.destination);
+    o.start(); o.stop(audioCtx.currentTime + dur);
+  } catch(e) {}
+}
+
+/* ---- home / deck picker ---- */
+const catsEl = $("cats");
+Object.entries(DECKS).forEach(([key, deck]) => {
+  const b = document.createElement("button");
+  b.className = "cat";
+  b.innerHTML = `<span class="emoji">${deck.emoji}</span>${deck.name}`;
+  b.onclick = () => {
+    selectedDeck = key;
+    document.querySelectorAll(".cat").forEach(c => c.classList.remove("selected"));
+    b.classList.add("selected");
+    $("startBtn").disabled = false;
+    $("startBtn").textContent = "START ROUND";
+  };
+  catsEl.appendChild(b);
+});
+
+/* ---- tilt permission ---- */
+$("tiltBtn").onclick = async () => {
+  if (typeof DeviceOrientationEvent !== "undefined" &&
+      typeof DeviceOrientationEvent.requestPermission === "function") {
+    try {
+      const res = await DeviceOrientationEvent.requestPermission();
+      tiltEnabled = res === "granted";
+    } catch(e) { tiltEnabled = false; }
+  } else {
+    tiltEnabled = !tiltEnabled;
+  }
+  const btn = $("tiltBtn");
+  btn.textContent = tiltEnabled ? "On" : "Enable";
+  btn.classList.toggle("on", tiltEnabled);
+};
+
+/*
+  Tilt detection: compute how much the screen faces the ceiling vs the floor.
+  faceValue = cos(beta) * cos(gamma)
+    +1 → screen flat, facing the ceiling (tilt UP  → pass)
+     0 → phone vertical at your forehead (neutral)
+    -1 → screen facing the floor        (tilt DOWN → correct)
+  Works whether the phone is held in portrait or landscape.
+*/
+const rad = d => d * Math.PI / 180;
+window.addEventListener("deviceorientation", e => {
+  if (!tiltEnabled || e.beta == null || e.gamma == null) return;
+  const faceValue = Math.cos(rad(e.beta)) * Math.cos(rad(e.gamma));
+
+  // Require a return to (near) vertical before accepting the next tilt
+  if (!tiltReady) {
+    if (Math.abs(faceValue) < 0.3) tiltReady = true;
+    return;
+  }
+  if (!gameActive) return;
+
+  if (faceValue < -0.55) {       // tipped face-down → correct
+    tiltReady = false;
+    mark(true);
+  } else if (faceValue > 0.55) { // tipped face-up → pass
+    tiltReady = false;
+    mark(false);
+  }
+});
+
+/* ---- start flow ---- */
+$("startBtn").onclick = startCountdown;
+$("againBtn").onclick = startCountdown;
+$("homeBtn").onclick = () => show("home");
+
+function startCountdown() {
+  if (!selectedDeck) return;
+  deckWords = shuffle([...DECKS[selectedDeck].words]);
+  score = 0; history = []; timeLeft = ROUND_SECONDS;
+  show("countdown");
+  let n = 3;
+  $("countNum").textContent = n;
+  beep(440);
+  const cd = setInterval(() => {
+    n--;
+    if (n > 0) {
+      $("countNum").textContent = n;
+      $("countNum").style.animation = "none";
+      void $("countNum").offsetWidth;
+      $("countNum").style.animation = "";
+      beep(440);
+    } else {
+      clearInterval(cd);
+      beep(880, .25);
+      startGame();
+    }
+  }, 900);
+}
+
+function startGame() {
+  gameActive = true;
+  show("game");
+  nextWord();
+  updateTimer();
+  timerId = setInterval(() => {
+    timeLeft--;
+    updateTimer();
+    if (timeLeft <= 5 && timeLeft > 0) beep(660, .08, "sine", .1);
+    if (timeLeft <= 0) endGame();
+  }, 1000);
+}
+
+function updateTimer() {
+  $("timerText").textContent = timeLeft;
+  $("timerBar").style.width = (timeLeft / ROUND_SECONDS * 100) + "%";
+}
+
+function nextWord() {
+  if (deckWords.length === 0) deckWords = shuffle([...DECKS[selectedDeck].words]);
+  currentWord = deckWords.pop();
+  $("word").textContent = currentWord;
+}
+
+function mark(correct) {
+  if (!gameActive) return;
+  history.push({ word: currentWord, got: correct });
+  if (correct) { score++; beep(880, .15); setTimeout(() => beep(1320, .15), 100); }
+  else beep(220, .2, "sawtooth");
+
+  const g = $("game");
+  g.classList.add(correct ? "flash-go" : "flash-skip");
+  $("word").style.display = "none";
+  const fb = $("feedback");
+  fb.textContent = correct ? "GOT IT!" : "PASS";
+  fb.style.display = "block";
+
+  gameActive = false;
+  setTimeout(() => {
+    g.classList.remove("flash-go", "flash-skip");
+    fb.style.display = "none";
+    $("word").style.display = "block";
+    if (timeLeft > 0) { nextWord(); gameActive = true; }
+  }, 550);
+}
+
+$("zoneGo").onclick = () => mark(true);
+$("zoneSkip").onclick = () => mark(false);
+document.addEventListener("keydown", e => {
+  if (!$("game").classList.contains("active")) return;
+  if (e.key === "ArrowRight" || e.key === " ") mark(true);
+  if (e.key === "ArrowLeft") mark(false);
+});
+
+function endGame() {
+  clearInterval(timerId);
+  gameActive = false;
+  beep(523, .2); setTimeout(() => beep(659, .2), 180); setTimeout(() => beep(784, .35), 360);
+  $("finalScore").textContent = score;
+  $("scoreLabel").textContent = score === 1 ? "CORRECT!" : "CORRECT!";
+  const list = $("wordList");
+  list.innerHTML = "";
+  history.forEach(h => {
+    const d = document.createElement("div");
+    d.className = "word-item " + (h.got ? "got" : "miss");
+    d.innerHTML = `<span>${h.word}</span><span>${h.got ? "✓" : "✗"}</span>`;
+    list.appendChild(d);
+  });
+  show("results");
+}
+
+function shuffle(a) {
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+</script>
+</body>
+</html>
