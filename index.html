@@ -234,8 +234,26 @@
       animation: blink 1.6s steps(1) infinite;
     }
 
-    .cab-body { padding: 1rem 1.05rem 1.15rem; display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
+    .cab-icon {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.5rem;
+    }
+    .cab-icon svg {
+      width: 100%;
+      height: 100%;
+      filter: drop-shadow(0 0 10px var(--accent));
+      transition: transform 0.25s ease;
+    }
+    .cabinet.live:hover .cab-icon svg {
+      transform: scale(1.06);
+    }
 
+    .cab-body { padding: 1rem 1.05rem 1.15rem; display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
+    
     .cab-top { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; }
     .cab-name { font-weight: 700; font-size: 1.12rem; letter-spacing: -0.01em; }
 
@@ -355,7 +373,8 @@
         desc: 'Hold the phone to your forehead and guess the word from your team\u2019s clues before time runs out.',
         status: 'live',
         href: './heads.up/index.html',
-        accent: '#ff5d8f'
+        accent: '#ff5d8f',
+        preview: 'headsup'
       },
       {
         name: 'Skull King',
@@ -363,7 +382,8 @@
         desc: 'A pirate-themed trick-taking game with bidding, special cards, and escalating rounds.',
         status: 'live',
         href: './skull.king/index.html',
-        accent: '#ffc24b'
+        accent: '#ffc24b',
+        preview: 'skullking'
       }
     ];
 
@@ -384,11 +404,115 @@
       return mini;
     }
 
+    function makeHeadsUpPreview() {
+      const wrap = document.createElement('div');
+      wrap.className = 'cab-icon';
+      wrap.innerHTML = `
+        <svg viewBox="0 0 200 120" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="hu-bg" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#ff5d8f"/>
+              <stop offset="100%" stop-color="#b02652"/>
+            </linearGradient>
+            <linearGradient id="hu-card" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#ffffff"/>
+              <stop offset="100%" stop-color="#ffeef3"/>
+            </linearGradient>
+          </defs>
+          <g opacity="0.35">
+            <circle cx="30" cy="30" r="3" fill="#ff5d8f" />
+            <circle cx="170" cy="90" r="4" fill="#ff5d8f" />
+            <circle cx="165" cy="25" r="2" fill="#ffc24b" />
+            <path d="M 25 60 Q 20 40 35 30" stroke="#ff5d8f" stroke-width="2" fill="none" stroke-dasharray="3,3"/>
+            <path d="M 175 60 Q 180 80 165 90" stroke="#ff5d8f" stroke-width="2" fill="none" stroke-dasharray="3,3"/>
+          </g>
+          <g transform="translate(100, 60) rotate(-6)">
+            <rect x="-42" y="-52" width="84" height="104" rx="14" fill="#181a24" stroke="#ff5d8f" stroke-width="2.5" />
+            <rect x="-36" y="-44" width="72" height="88" rx="8" fill="url(#hu-bg)" />
+            <rect x="-10" y="-48" width="20" height="3" rx="1.5" fill="#33b5e5" opacity="0.6"/>
+            <rect x="-28" y="-24" width="56" height="48" rx="6" fill="url(#hu-card)"/>
+            <text x="0" y="-8" font-family="'Space Grotesk', sans-serif" font-weight="700" font-size="8" fill="#b02652" text-anchor="middle" letter-spacing="1">HEADS UP!</text>
+            <text x="0" y="8" font-family="'Bungee', cursive" font-weight="400" font-size="13" fill="#ff5d8f" text-anchor="middle">GUESS</text>
+            <polygon points="0,15 3,21 8,21 4,24 6,29 0,26 -6,29 -4,24 -8,21 -3,21" fill="#ffc24b" />
+            <path d="M -48 -10 C -52 -25 -35 -35 -20 -35" fill="none" stroke="#ffc24b" stroke-width="2" stroke-linecap="round" />
+            <polygon points="-20,-38 -14,-34 -20,-30" fill="#ffc24b"/>
+            <path d="M 48 10 C 52 25 35 35 20 35" fill="none" stroke="#ffc24b" stroke-width="2" stroke-linecap="round" />
+            <polygon points="20,38 14,34 20,30" fill="#ffc24b"/>
+          </g>
+          <polygon points="40,20 42,25 47,25 43,28 45,33 40,30 35,33 37,28 33,25 38,25" fill="#ffc24b" />
+          <polygon points="160,85 161,88 165,88 162,90 163,94 160,92 157,94 158,90 155,88 159,88" fill="#ff5d8f" />
+        </svg>`;
+      return wrap;
+    }
+
+    function makeSkullKingPreview() {
+      const wrap = document.createElement('div');
+      wrap.className = 'cab-icon';
+      wrap.innerHTML = `
+        <svg viewBox="0 0 200 120" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="sk-gold" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#ffe066"/>
+              <stop offset="100%" stop-color="#ff9900"/>
+            </linearGradient>
+            <linearGradient id="sk-card" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#1e2436"/>
+              <stop offset="100%" stop-color="#0f131d"/>
+            </linearGradient>
+          </defs>
+          <g transform="translate(100, 68)">
+            <g transform="rotate(-22) translate(-28, -25)">
+              <rect x="-18" y="-28" width="36" height="54" rx="4" fill="url(#sk-card)" stroke="#ffc24b" stroke-width="1.5"/>
+              <text x="0" y="-8" font-family="'Bungee', cursive" font-size="13" fill="#ff5d8f" text-anchor="middle">14</text>
+              <circle cx="0" cy="8" r="6" fill="none" stroke="#ff5d8f" stroke-width="1.5"/>
+            </g>
+            <g transform="rotate(22) translate(28, -25)">
+              <rect x="-18" y="-28" width="36" height="54" rx="4" fill="url(#sk-card)" stroke="#ffc24b" stroke-width="1.5"/>
+              <text x="0" y="-8" font-family="'Bungee', cursive" font-size="13" fill="#33b5e5" text-anchor="middle">SK</text>
+              <polygon points="0,-2 -6,8 6,8" fill="#33b5e5"/>
+            </g>
+            <g transform="rotate(0) translate(0, -32)">
+              <rect x="-20" y="-30" width="40" height="60" rx="4" fill="url(#sk-card)" stroke="#ffc24b" stroke-width="2"/>
+              <text x="0" y="-10" font-family="'Bungee', cursive" font-size="10" fill="#ffc24b" text-anchor="middle">KING</text>
+              <path d="M-8 8 L0 -4 L8 8 Z" fill="#ffc24b"/>
+            </g>
+          </g>
+          <g stroke="#eef1f8" stroke-width="2.5" stroke-linecap="round">
+            <line x1="45" y1="95" x2="155" y2="25" />
+            <line x1="155" y1="95" x2="45" y2="25" />
+          </g>
+          <g fill="#ffc24b">
+            <circle cx="45" cy="95" r="3.5"/>
+            <circle cx="155" cy="95" r="3.5"/>
+          </g>
+          <g transform="translate(100, 62)">
+            <path d="M-20 -6 C-20 -28 20 -28 20 -6 C20 8 14 14 11 19 L-11 19 C-14 14 -20 8 -20 -6 Z" fill="#eef1f8"/>
+            <path d="M-9 19 L-9 24 L9 24 L9 19 Z" fill="#eef1f8"/>
+            <line x1="-4" y1="19" x2="-4" y2="24" stroke="#151926" stroke-width="1.5"/>
+            <line x1="0" y1="19" x2="0" y2="24" stroke="#151926" stroke-width="1.5"/>
+            <line x1="4" y1="19" x2="4" y2="24" stroke="#151926" stroke-width="1.5"/>
+            <line x1="-20" y1="-20" x2="4" y2="2" stroke="#151926" stroke-width="1.5"/>
+            <circle cx="-9" cy="-5" r="5.5" fill="#151926"/>
+            <circle cx="9" cy="-5" r="5.5" fill="#151926"/>
+            <polygon points="0,4 -2.5,9 2.5,9" fill="#151926"/>
+            <path d="M-34 -16 C-18 -22 18 -22 34 -16 C26 -32 -26 -32 -34 -16 Z" fill="#151926" stroke="#ffc24b" stroke-width="2"/>
+            <path d="M-22 -20 C-10 -35 10 -35 22 -20 Z" fill="#1e2436"/>
+            <path d="M-9 -24 L-5 -33 L0 -28 L5 -33 L9 -24 Z" fill="url(#sk-gold)"/>
+            <circle cx="0" cy="-30" r="1.8" fill="#ff5d8f"/>
+          </g>
+        </svg>`;
+      return wrap;
+    }
+
     function buildScreen(p) {
       const screen = document.createElement('div');
       screen.className = 'screen';
       if (p.preview === 'coloroid') {
         screen.appendChild(makeMiniGrid());
+      } else if (p.preview === 'headsup') {
+        screen.appendChild(makeHeadsUpPreview());
+      } else if (p.preview === 'skullking') {
+        screen.appendChild(makeSkullKingPreview());
       } else {
         const ns = document.createElement('div');
         ns.className = 'nosignal';
