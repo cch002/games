@@ -161,12 +161,15 @@ const BONUSES = [
 ];
 
 const KEY = "skullking_game_v1";
+const CREWS = [
+  { name: "Heine Family", names: ["Erin", "Nora", "Evelyn", "Christian"] },
+];
 
 const S = {
   phase: "setup",      // setup | play | final
   step: "bid",         // bid | tally
   ri: 0,
-  names: ["", "", ""],
+  names: ["Erin", "Nora", "Evelyn", "Christian"],
   players: [],
   rounds: [],
   ret: null,           // where to return after fixing an earlier round
@@ -221,8 +224,17 @@ function setupView() {
       <button class="x" data-drop="${i}" aria-label="Remove player ${i + 1}" ${S.names.length <= 2 ? "disabled" : ""}>&times;</button>
     </div>`).join("");
 
+  const crews = CREWS.map((c, i) => {
+    const on = c.names.length === S.names.length && c.names.every((n, j) => n === S.names[j].trim());
+    return `<button class="chip${on ? " on" : ""}" data-crew="${i}">${esc(c.name)}</button>`;
+  }).join("");
+
   main.innerHTML = `
     <div class="card">
+      <div class="row-head" style="margin-bottom:12px">
+        <div class="tag">Crew</div>
+        <div class="chips" style="margin:0">${crews}<button class="chip clear" data-crew="clear">Clear</button></div>
+      </div>
       ${rows}
       ${S.names.length < 8 ? '<button class="add" data-add>+ Add a player</button>' : ""}
     </div>
@@ -376,6 +388,7 @@ document.addEventListener("click", (ev) => {
   const d = el.dataset;
 
   if ("add" in d) { S.names.push(""); render(); }
+  else if (d.crew !== undefined) { S.names = d.crew === "clear" ? ["", ""] : [...CREWS[+d.crew].names]; render(); }
   else if (d.drop !== undefined) { S.names.splice(+d.drop, 1); render(); }
   else if ("start" in d) startGame();
   else if (d.pip) {
