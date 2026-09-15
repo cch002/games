@@ -205,8 +205,21 @@ function totals() {
   return t;
 }
 
+const inProgress = () => S.rounds.length > 0;
+const hasScores = () => S.rounds.some((r) => S.players.some((p) => r[p.id] && r[p.id].bid !== null));
+
 function startGame() {
-  S.players = S.names.map((n, i) => ({ id: "p" + i, name: n.trim() || "Pirate " + (i + 1) }));
+  const names = S.names.map((n, i) => n.trim() || "Pirate " + (i + 1));
+  if (inProgress() && names.length === S.players.length) {
+    // same crew size: just rename in place and keep every score
+    S.players.forEach((p, i) => (p.name = names[i]));
+    S.phase = "play";
+    render();
+    return;
+  }
+  if (hasScores() && !confirm("Changing the number of players starts a new game. The current ledger will be cleared.")) return;
+  S.players = names.map((n, i) => ({ id: "p" + i, name: n }));
+  S.ret = null;
   S.rounds = Array.from({ length: ROUNDS }, () =>
     Object.fromEntries(S.players.map((p) => [p.id, blank()]))
   );
@@ -238,9 +251,13 @@ function setupView() {
       ${rows}
       ${S.names.length < 8 ? '<button class="add" data-add>+ Add a player</button>' : ""}
     </div>
-    <p class="foot">Ten rounds. Round 1 deals one card, round 10 deals ten.<br>
-    Bid exactly right to be paid; miss and walk the plank.</p>`;
-  bar.innerHTML = '<button class="act" data-start>Set sail</button>';
+    <p class="foot">${inProgress()
+      ? "Game in progress. Renaming keeps every score.<br>Adding or removing a player starts a new game."
+      : "Ten rounds. Round 1 deals one card, round 10 deals ten.<br>Bid exactly right to be paid; miss and walk the plank."}</p>`;
+  bar.innerHTML = inProgress()
+    ? `<button class="act ghost" data-resume>Back</button>
+       <button class="act" data-start>Update crew</button>`
+    : '<button class="act" data-start>Set sail</button>';
 }
 
 function playView() {
@@ -309,6 +326,7 @@ function playView() {
     : S.ret ? "Save fix"
     : (S.ri === ROUNDS - 1 ? "Final tally" : "Score round " + rn);
   bar.innerHTML = `
+    <button class="act ghost" data-crew-edit aria-label="Edit players">Crew</button>
     <button class="act ghost" data-back ${bidding && S.ri === 0 ? "disabled" : ""}>Back</button>
     <button class="act" data-next ${(bidding ? bidsIn : tricksIn) ? "" : "disabled"}>${nextLabel}</button>`;
 }
@@ -391,6 +409,8 @@ document.addEventListener("click", (ev) => {
   else if (d.crew !== undefined) { S.names = d.crew === "clear" ? ["", ""] : [...CREWS[+d.crew].names]; render(); }
   else if (d.drop !== undefined) { S.names.splice(+d.drop, 1); render(); }
   else if ("start" in d) startGame();
+  else if ("crewEdit" in d) { S.names = S.players.map((p) => p.name); S.phase = "setup"; window.scrollTo({ top: 0 }); render(); }
+  else if ("resume" in d) { S.phase = "play"; render(); }
   else if (d.pip) {
     const e = S.rounds[S.ri][d.pip];
     if (S.step === "bid") e.bid = +d.val; else e.tricks = +d.val;
