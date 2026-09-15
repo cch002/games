@@ -2,8 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="theme-color" content="#241d63">
 <title>Heads Up!</title>
+<link rel="icon" href="../favicon.svg">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
@@ -14,8 +20,12 @@
     --paper-deep: #16123f;
     --pop: #ffd21f;
     --go: #3ddc84;
+    --go-deep: #1d9c58;
     --skip: #ff5d3b;
     --white: #fdfcf7;
+    --muted: rgba(253,252,247,.65);
+    --line: rgba(253,252,247,.18);
+    --card: rgba(253,252,247,.07);
   }
   * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { height: 100%; overflow: hidden; }
@@ -25,7 +35,9 @@
     color: var(--white);
     user-select: none;
     -webkit-user-select: none;
+    touch-action: manipulation;
   }
+  button { font: inherit; color: inherit; }
   .screen {
     position: absolute; inset: 0;
     display: none;
@@ -36,6 +48,14 @@
     text-align: center;
   }
   .screen.active { display: flex; }
+  .scroll {
+    justify-content: flex-start;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-top: max(36px, env(safe-area-inset-top));
+    padding-bottom: max(40px, env(safe-area-inset-bottom));
+  }
+  .hidden { display: none !important; }
 
   /* ---------- HOME ---------- */
   #home {
@@ -43,9 +63,6 @@
       radial-gradient(circle at 20% 15%, rgba(255,210,31,.14), transparent 40%),
       radial-gradient(circle at 85% 85%, rgba(61,220,132,.12), transparent 45%),
       var(--paper);
-    justify-content: flex-start;
-    padding-top: max(40px, env(safe-area-inset-top));
-    overflow-y: auto;
   }
   .logo {
     font-family: 'Archivo Black', sans-serif;
@@ -57,25 +74,33 @@
     text-shadow: 4px 4px 0 var(--ink);
     margin-bottom: 8px;
   }
-  .tagline {
-    font-size: .95rem;
-    opacity: .75;
-    margin-bottom: 28px;
-    max-width: 300px;
+  .tagline { font-size: .95rem; opacity: .75; margin-bottom: 22px; max-width: 300px; }
+
+  .section-title {
+    width: 100%; max-width: 480px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: .75rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase;
+    color: var(--muted); margin: 18px 0 10px;
   }
+  .section-title .link {
+    background: none; border: none; color: var(--pop); font-weight: 700;
+    letter-spacing: 0; text-transform: none; font-size: .8rem; cursor: pointer;
+  }
+
   .cats {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
     width: 100%;
-    max-width: 420px;
-    margin-bottom: 28px;
+    max-width: 480px;
   }
+  @media (min-width: 560px) { .cats { grid-template-columns: repeat(3, 1fr); } }
   .cat {
-    font-family: 'Space Grotesk', sans-serif;
+    position: relative;
     font-weight: 700;
-    font-size: 1rem;
-    padding: 20px 10px;
+    font-size: .95rem;
+    line-height: 1.15;
+    padding: 16px 8px 14px;
     border: 3px solid var(--white);
     border-radius: 16px;
     background: transparent;
@@ -84,64 +109,140 @@
     transition: transform .1s, background .15s, color .15s;
   }
   .cat .emoji { display: block; font-size: 1.7rem; margin-bottom: 6px; }
+  .cat .count { display: block; font-weight: 500; font-size: .7rem; opacity: .6; margin-top: 4px; }
+  .cat .best {
+    position: absolute; top: -9px; right: -6px;
+    background: var(--pop); color: var(--ink);
+    font-size: .68rem; font-weight: 700; padding: 3px 8px; border-radius: 999px;
+    box-shadow: 0 2px 0 var(--ink);
+  }
   .cat.selected {
     background: var(--pop);
     color: var(--ink);
     border-color: var(--pop);
     transform: rotate(-1.5deg) scale(1.03);
   }
+  .cat.selected .count { opacity: .75; }
+  .cat.selected .best { background: var(--ink); color: var(--pop); box-shadow: none; }
   .cat:active { transform: scale(.96); }
+  .cat.special { border-style: dashed; }
+
+  /* settings */
+  .settings {
+    width: 100%; max-width: 480px;
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .setting {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    background: var(--card); border-radius: 14px; padding: 10px 14px;
+    font-size: .9rem; font-weight: 500; text-align: left;
+  }
+  .setting .lbl small { display: block; font-size: .72rem; opacity: .6; font-weight: 400; margin-top: 2px; }
+  .seg { display: flex; gap: 4px; background: rgba(0,0,0,.25); padding: 4px; border-radius: 999px; flex-shrink: 0; }
+  .seg button {
+    border: none; background: transparent; color: var(--white);
+    font-weight: 700; font-size: .85rem; padding: 7px 12px; border-radius: 999px; cursor: pointer;
+    opacity: .7;
+  }
+  .seg button.on { background: var(--pop); color: var(--ink); opacity: 1; }
+  .toggle {
+    border: 2px solid var(--white); background: transparent; color: var(--white);
+    font-weight: 700; font-size: .85rem; padding: 7px 14px; border-radius: 999px; cursor: pointer; flex-shrink: 0;
+    min-width: 66px;
+  }
+  .toggle.on { background: var(--go); border-color: var(--go); color: var(--ink); }
+  .toggle.warn { background: var(--skip); border-color: var(--skip); color: var(--white); }
+
+  .tilt-status { font-size: .74rem; margin-top: 4px; opacity: .8; }
+  .tilt-status.ok { color: var(--go); }
+  .tilt-status.bad { color: #ffb5a3; }
+  .gauge {
+    position: relative; height: 10px; border-radius: 999px; margin-top: 8px;
+    background: linear-gradient(90deg, var(--skip), rgba(253,252,247,.25), var(--go));
+    width: 100%;
+  }
+  .gauge .dot {
+    position: absolute; top: -5px; width: 20px; height: 20px; border-radius: 50%;
+    background: var(--pop); border: 3px solid var(--ink);
+    left: 50%; transform: translateX(-50%);
+    transition: left .08s linear;
+  }
+  .gauge-labels { display: flex; justify-content: space-between; font-size: .66rem; opacity: .6; margin-top: 6px; }
+
+  .team-names { display: flex; gap: 8px; width: 100%; }
+  .team-names input {
+    flex: 1; min-width: 0; font: inherit; font-weight: 700; font-size: .9rem;
+    padding: 9px 12px; border-radius: 10px; border: 2px solid var(--line);
+    background: rgba(0,0,0,.2); color: var(--white); text-align: center;
+  }
+  .team-names input:focus { outline: none; border-color: var(--pop); }
+  .scoreboard-mini {
+    display: flex; gap: 8px; width: 100%; max-width: 480px; margin-top: 10px;
+  }
+  .scoreboard-mini .team {
+    flex: 1; background: var(--card); border-radius: 12px; padding: 8px 10px;
+    font-weight: 700; font-size: .85rem;
+  }
+  .scoreboard-mini .team b { display: block; font-family: 'Archivo Black', sans-serif; font-size: 1.4rem; color: var(--pop); }
+  .scoreboard-mini .team.up { outline: 2px solid var(--go); }
 
   .btn-big {
     font-family: 'Archivo Black', sans-serif;
-    font-size: 1.5rem;
+    font-size: 1.4rem;
     letter-spacing: .02em;
-    padding: 18px 48px;
+    padding: 18px 44px;
     border-radius: 999px;
     border: none;
     background: var(--go);
     color: var(--ink);
     cursor: pointer;
-    box-shadow: 0 6px 0 #1d9c58;
+    box-shadow: 0 6px 0 var(--go-deep);
     transition: transform .08s, box-shadow .08s;
   }
-  .btn-big:active { transform: translateY(4px); box-shadow: 0 2px 0 #1d9c58; }
+  .btn-big:active { transform: translateY(4px); box-shadow: 0 2px 0 var(--go-deep); }
   .btn-big:disabled { opacity: .4; box-shadow: none; cursor: default; }
-
-  .tilt-row {
-    margin-top: 18px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: .85rem;
-    opacity: .85;
+  .btn-big.pop { background: var(--pop); box-shadow: 0 6px 0 #b8930a; }
+  .btn-big.pop:active { box-shadow: 0 2px 0 #b8930a; }
+  .sticky-start {
+    position: sticky; bottom: 0; width: 100%; max-width: 480px;
+    padding: 14px 0 4px; margin-top: 18px;
+    background: linear-gradient(180deg, rgba(36,29,99,0), var(--paper) 40%);
   }
-  .tilt-row button {
-    font: inherit;
-    font-weight: 700;
-    padding: 8px 14px;
-    border-radius: 999px;
-    border: 2px solid var(--white);
-    background: transparent;
-    color: var(--white);
-    cursor: pointer;
-  }
-  .tilt-row button.on { background: var(--go); border-color: var(--go); color: var(--ink); }
+  .sticky-start .btn-big { width: 100%; }
 
   .howto {
-    margin-top: 22px;
+    margin-top: 18px;
     font-size: .8rem;
     line-height: 1.5;
-    opacity: .6;
-    max-width: 330px;
-    padding-bottom: 30px;
+    opacity: .65;
+    max-width: 360px;
   }
+  .howto b { color: var(--pop); }
+
+  /* ---------- CUSTOM DECK ---------- */
+  #custom { background: var(--paper); }
+  #custom h2 { font-family: 'Archivo Black', sans-serif; color: var(--pop); font-size: 1.8rem; text-shadow: 3px 3px 0 var(--ink); margin-bottom: 6px; }
+  #custom p { font-size: .85rem; opacity: .7; margin-bottom: 14px; max-width: 360px; }
+  #customText {
+    width: 100%; max-width: 480px; height: 42vh; min-height: 180px;
+    font: inherit; font-size: 1rem; line-height: 1.5; padding: 14px;
+    border-radius: 14px; border: 2px solid var(--line);
+    background: rgba(0,0,0,.25); color: var(--white); resize: none;
+    user-select: text; -webkit-user-select: text;
+  }
+  #customText:focus { outline: none; border-color: var(--pop); }
+  #customCount { margin: 10px 0 16px; font-size: .85rem; font-weight: 700; color: var(--pop); }
 
   /* ---------- COUNTDOWN ---------- */
   #countdown { background: var(--paper); }
+  #countTeam {
+    font-family: 'Archivo Black', sans-serif; font-size: 1.6rem; color: var(--go);
+    text-shadow: 3px 3px 0 var(--ink); margin-bottom: 8px;
+  }
   #countNum {
     font-family: 'Archivo Black', sans-serif;
-    font-size: 9rem;
+    font-size: min(9rem, 35vh);
+    line-height: 1;
     color: var(--pop);
     text-shadow: 6px 6px 0 var(--ink);
     animation: pop .9s infinite;
@@ -163,40 +264,68 @@
     height: 10px;
     background: var(--pop);
     width: 100%;
-    transition: width 1s linear;
+    transition: width .1s linear;
   }
+  #timerBar.hurry { background: var(--skip); }
+  .hud {
+    position: absolute; left: 0; right: 0;
+    top: max(18px, env(safe-area-inset-top));
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 max(16px, env(safe-area-inset-left)) 0 max(16px, env(safe-area-inset-right));
+    pointer-events: none;
+  }
+  .hud > * { pointer-events: auto; }
   #timerText {
-    position: absolute;
-    top: max(20px, env(safe-area-inset-top));
     font-family: 'Archivo Black', sans-serif;
     font-size: 2rem;
     color: var(--pop);
     text-shadow: 3px 3px 0 var(--ink);
+    min-width: 64px;
+    text-align: center;
+  }
+  #timerText.hurry { color: var(--skip); animation: throb .5s infinite; }
+  @keyframes throb { 50% { transform: scale(1.15); } }
+  #scorePill {
+    font-family: 'Archivo Black', sans-serif;
+    font-size: 1.2rem;
+    background: rgba(0,0,0,.3);
+    padding: 6px 14px; border-radius: 999px;
+    color: var(--white);
+  }
+  #quitBtn {
+    background: rgba(0,0,0,.3); border: none; color: var(--white);
+    width: 40px; height: 40px; border-radius: 50%; font-size: 1.1rem; font-weight: 700; cursor: pointer;
   }
   #word {
     font-family: 'Archivo Black', sans-serif;
-    font-size: clamp(2.4rem, 12vw, 6rem);
+    font-size: clamp(2.2rem, min(11vw, 22vh), 6.5rem);
     line-height: 1.05;
-    padding: 0 20px;
+    padding: 0 24px;
     text-shadow: 5px 5px 0 var(--ink);
     transform: rotate(-2deg);
-    max-width: 95vw;
-    word-wrap: break-word;
+    max-width: 96vw;
+    overflow-wrap: anywhere;
+    hyphens: auto;
   }
+  #word.new { animation: wordIn .25s ease-out; }
+  @keyframes wordIn { from { transform: rotate(-2deg) scale(.6); opacity: 0; } to { transform: rotate(-2deg) scale(1); opacity: 1; } }
   #feedback {
     font-family: 'Archivo Black', sans-serif;
-    font-size: clamp(3rem, 14vw, 7rem);
+    font-size: clamp(3rem, min(14vw, 28vh), 7rem);
     color: var(--ink);
     display: none;
+    animation: wordIn .2s ease-out;
   }
-  .zones {
-    position: absolute; inset: 0;
-    display: flex;
+  #streak {
+    position: absolute; bottom: max(80px, calc(env(safe-area-inset-bottom) + 70px));
+    font-weight: 700; color: var(--pop); font-size: 1rem; opacity: 0; transition: opacity .2s;
   }
-  .zone { flex: 1; display: flex; align-items: flex-end; justify-content: center; padding-bottom: max(26px, env(safe-area-inset-bottom)); }
+  #streak.show { opacity: 1; }
+  .zones { position: absolute; inset: 0; display: flex; }
+  .zone { flex: 1; display: flex; align-items: flex-end; justify-content: center; padding-bottom: max(26px, env(safe-area-inset-bottom)); cursor: pointer; }
   .zone-label {
     font-weight: 700;
-    font-size: .8rem;
+    font-size: .78rem;
     letter-spacing: .12em;
     text-transform: uppercase;
     padding: 8px 16px;
@@ -206,16 +335,39 @@
   }
   #zoneSkip .zone-label { color: #ffb5a3; border-color: rgba(255,93,59,.6); }
   #zoneGo .zone-label { color: #a9f5cd; border-color: rgba(61,220,132,.6); }
+  #tiltHint {
+    position: absolute; top: 50%; right: max(10px, env(safe-area-inset-right)); transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: 6px; align-items: center;
+    font-size: .62rem; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; opacity: .45;
+    pointer-events: none;
+  }
+  #tiltHint span { display: block; }
+
+  /* pause overlay */
+  #pause {
+    position: absolute; inset: 0; background: rgba(22,18,63,.92);
+    display: none; flex-direction: column; align-items: center; justify-content: center; gap: 16px;
+    font-family: 'Archivo Black', sans-serif; font-size: 2.4rem; color: var(--pop);
+  }
+  #pause.show { display: flex; }
+  #pause small { font-family: 'Space Grotesk', sans-serif; font-size: 1rem; opacity: .8; }
+
+  /* ---------- TIME'S UP ---------- */
+  #timesup { background: var(--paper); }
+  #timesup h2 { font-family: 'Archivo Black', sans-serif; font-size: clamp(2.4rem, 10vw, 4rem); color: var(--skip); text-shadow: 4px 4px 0 var(--ink); }
+  #timesup p { margin: 10px 0 6px; opacity: .8; }
+  #lastWord { font-family: 'Archivo Black', sans-serif; font-size: clamp(1.8rem, 8vw, 3rem); margin-bottom: 22px; text-shadow: 3px 3px 0 var(--ink); }
+  .btn-row { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; }
+  .btn-big.red { background: var(--skip); box-shadow: 0 6px 0 #b83a20; color: var(--white); }
+  .btn-big.red:active { box-shadow: 0 2px 0 #b83a20; }
 
   /* ---------- RESULTS ---------- */
   #results {
     background:
       radial-gradient(circle at 80% 10%, rgba(255,210,31,.15), transparent 45%),
       var(--paper);
-    justify-content: flex-start;
-    padding-top: max(48px, env(safe-area-inset-top));
-    overflow-y: auto;
   }
+  .result-team { font-family: 'Archivo Black', sans-serif; font-size: 1.3rem; color: var(--go); text-shadow: 3px 3px 0 var(--ink); margin-bottom: 4px; }
   .score-big {
     font-family: 'Archivo Black', sans-serif;
     font-size: 5.5rem;
@@ -223,66 +375,154 @@
     text-shadow: 5px 5px 0 var(--ink);
     line-height: 1;
   }
-  .score-label {
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin-bottom: 24px;
-    color: var(--pop);
+  .score-label { font-size: 1.05rem; font-weight: 700; margin-bottom: 6px; color: var(--pop); }
+  .badge {
+    display: inline-block; background: var(--pop); color: var(--ink); font-weight: 700; font-size: .78rem;
+    padding: 5px 12px; border-radius: 999px; margin-bottom: 14px; box-shadow: 0 3px 0 var(--ink);
+    transform: rotate(-2deg);
   }
-  .word-list {
-    width: 100%;
-    max-width: 380px;
-    margin-bottom: 28px;
-    text-align: left;
-  }
+  .scoreboard { display: flex; gap: 10px; width: 100%; max-width: 380px; margin-bottom: 18px; }
+  .scoreboard .team { flex: 1; background: var(--card); border-radius: 14px; padding: 10px; font-weight: 700; font-size: .85rem; }
+  .scoreboard .team b { display: block; font-family: 'Archivo Black', sans-serif; font-size: 1.8rem; color: var(--pop); }
+  .scoreboard .team.lead { outline: 3px solid var(--pop); }
+  .word-list { width: 100%; max-width: 380px; margin-bottom: 20px; text-align: left; }
+  .word-list .hint { font-size: .72rem; opacity: .55; text-align: center; margin-bottom: 8px; }
   .word-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 9px 16px;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 16px;
     border-radius: 10px;
     margin-bottom: 6px;
     font-weight: 500;
-    background: rgba(253,252,247,.07);
+    background: var(--card);
+    cursor: pointer;
   }
+  .word-item:active { transform: scale(.98); }
   .word-item.got { border-left: 5px solid var(--go); }
   .word-item.miss { border-left: 5px solid var(--skip); opacity: .7; }
   .word-item span:last-child { font-weight: 700; }
   .word-item.got span:last-child { color: var(--go); }
   .word-item.miss span:last-child { color: var(--skip); }
-  .results-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; padding-bottom: 40px; }
+  .results-btns { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; padding-bottom: 10px; }
   .btn-ghost {
-    font-family: 'Space Grotesk', sans-serif;
     font-weight: 700;
     font-size: 1rem;
-    padding: 16px 28px;
+    padding: 16px 26px;
     border-radius: 999px;
     border: 3px solid var(--white);
     background: transparent;
     color: var(--white);
     cursor: pointer;
   }
+
+  /* toast */
+  #toast {
+    position: fixed; left: 50%; bottom: max(24px, env(safe-area-inset-bottom));
+    transform: translateX(-50%) translateY(20px);
+    background: var(--pop); color: var(--ink); font-weight: 700; font-size: .9rem;
+    padding: 10px 18px; border-radius: 999px; box-shadow: 0 4px 0 var(--ink);
+    opacity: 0; transition: opacity .2s, transform .2s; pointer-events: none; z-index: 50;
+    max-width: 90vw; text-align: center;
+  }
+  #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  @media (max-height: 460px) {
+    /* landscape phones */
+    .logo { font-size: 2.2rem; margin-bottom: 4px; }
+    .tagline { margin-bottom: 10px; }
+    .score-big { font-size: 3.5rem; }
+    #countNum { font-size: 5rem; }
+    #timerText { font-size: 1.5rem; }
+  }
 </style>
 </head>
 <body>
 
 <!-- HOME -->
-<div class="screen active" id="home">
+<div class="screen scroll active" id="home">
   <div class="logo">HEADS<br>UP!</div>
   <p class="tagline">Hold the phone to your forehead. Friends shout clues. Guess the word!</p>
+
+  <div class="section-title"><span>Pick a deck</span><span id="deckMeta"></span></div>
   <div class="cats" id="cats"></div>
-  <button class="btn-big" id="startBtn" disabled>PICK A DECK</button>
-  <div class="tilt-row">
-    <span>Tilt controls (phone)</span>
-    <button id="tiltBtn">Enable</button>
+
+  <div class="section-title"><span>Settings</span></div>
+  <div class="settings">
+    <div class="setting">
+      <div class="lbl">Round length<small>seconds per turn</small></div>
+      <div class="seg" id="lenSeg">
+        <button data-v="30">30</button>
+        <button data-v="60">60</button>
+        <button data-v="90">90</button>
+        <button data-v="120">120</button>
+      </div>
+    </div>
+    <div class="setting" style="flex-direction:column; align-items:stretch;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <div class="lbl">Tilt controls<small>tilt down = got it, tilt up = pass</small></div>
+        <button class="toggle" id="tiltBtn">Off</button>
+      </div>
+      <div id="tiltInfo" class="hidden">
+        <div class="tilt-status" id="tiltStatus">Checking motion sensors…</div>
+        <div class="gauge"><div class="dot" id="gaugeDot"></div></div>
+        <div class="gauge-labels"><span>▲ PASS (tilt up)</span><span>upright</span><span>GOT IT (tilt down) ▼</span></div>
+      </div>
+    </div>
+    <div class="setting">
+      <div class="lbl">Sound<small>beeps and buzzes</small></div>
+      <button class="toggle" id="soundBtn">On</button>
+    </div>
+    <div class="setting">
+      <div class="lbl">Vibrate<small>haptic buzz on each answer</small></div>
+      <button class="toggle" id="hapticBtn">On</button>
+    </div>
+    <div class="setting">
+      <div class="lbl">Fullscreen<small>hide the browser bar during play</small></div>
+      <button class="toggle" id="fsBtn">On</button>
+    </div>
+    <div class="setting" style="flex-direction:column; align-items:stretch;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <div class="lbl">Teams<small>take turns, keep a running score</small></div>
+        <button class="toggle" id="teamBtn">Off</button>
+      </div>
+      <div id="teamInfo" class="hidden" style="margin-top:10px;">
+        <div class="team-names">
+          <input id="team1Name" maxlength="14" placeholder="Team 1">
+          <input id="team2Name" maxlength="14" placeholder="Team 2">
+        </div>
+        <div class="scoreboard-mini" id="miniBoard"></div>
+        <div style="text-align:center; margin-top:8px;">
+          <button class="link" id="resetScores" style="background:none;border:none;color:var(--pop);font-weight:700;cursor:pointer;font-size:.8rem;">Reset scores</button>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <div class="sticky-start">
+    <button class="btn-big" id="startBtn" disabled>PICK A DECK</button>
+  </div>
+
   <p class="howto">
-    <strong>How to play:</strong> tilt the phone <em>down</em> (or tap the right side) when you guess it,
-    tilt <em>up</em> (or tap the left side) to pass. 60 seconds per round.
+    <b>How to play:</b> one player holds the phone on their forehead, screen facing out. Everyone else gives clues.
+    Tilt the phone <b>down</b> (or tap the right side) when they guess it, tilt <b>up</b> (or tap the left side) to pass.
+    On a computer use <b>→ / space</b> and <b>←</b>.
   </p>
+</div>
+
+<!-- CUSTOM DECK -->
+<div class="screen scroll" id="custom">
+  <h2>YOUR DECK</h2>
+  <p>One word or phrase per line. Inside jokes, family names, pets… anything goes. Saved on this device.</p>
+  <textarea id="customText" placeholder="Grandma's meatloaf&#10;The neighbour's dog&#10;That one road trip"></textarea>
+  <div id="customCount">0 words</div>
+  <div class="btn-row">
+    <button class="btn-big" id="customSave">SAVE DECK</button>
+    <button class="btn-ghost" id="customCancel">Cancel</button>
+  </div>
 </div>
 
 <!-- COUNTDOWN -->
 <div class="screen" id="countdown">
+  <div id="countTeam" class="hidden"></div>
   <div id="countNum">3</div>
   <div id="countHint">Phone to your forehead! 📱</div>
 </div>
@@ -290,59 +530,321 @@
 <!-- GAME -->
 <div class="screen" id="game">
   <div id="timerBar"></div>
-  <div id="timerText">60</div>
+  <div class="hud">
+    <div id="scorePill">0</div>
+    <div id="timerText">60</div>
+    <button id="quitBtn" title="End round">✕</button>
+  </div>
   <div id="word">WORD</div>
   <div id="feedback"></div>
+  <div id="streak"></div>
+  <div id="tiltHint" class="hidden"><span>▲ pass</span><span>▼ got it</span></div>
   <div class="zones">
     <div class="zone" id="zoneSkip"><span class="zone-label">← Tap to pass</span></div>
     <div class="zone" id="zoneGo"><span class="zone-label">Tap if correct →</span></div>
   </div>
+  <div id="pause">PAUSED<small>tap anywhere to resume</small></div>
+</div>
+
+<!-- TIME'S UP -->
+<div class="screen" id="timesup">
+  <h2>TIME'S UP!</h2>
+  <p>Did they get the last one?</p>
+  <div id="lastWord">Word</div>
+  <div class="btn-row">
+    <button class="btn-big" id="lastGot">GOT IT ✓</button>
+    <button class="btn-big red" id="lastMiss">NOPE ✗</button>
+  </div>
 </div>
 
 <!-- RESULTS -->
-<div class="screen" id="results">
+<div class="screen scroll" id="results">
+  <div class="result-team hidden" id="resultTeam"></div>
   <div class="score-big" id="finalScore">0</div>
   <div class="score-label" id="scoreLabel">CORRECT</div>
+  <div class="badge hidden" id="bestBadge">🏆 NEW BEST!</div>
+  <div class="scoreboard hidden" id="scoreboard"></div>
   <div class="word-list" id="wordList"></div>
   <div class="results-btns">
     <button class="btn-big" id="againBtn">PLAY AGAIN</button>
+    <button class="btn-ghost" id="shareBtn">Share</button>
     <button class="btn-ghost" id="homeBtn">Change deck</button>
   </div>
 </div>
 
+<div id="toast"></div>
+
 <script>
+/* =========================================================
+   DECKS
+   ========================================================= */
 const DECKS = {
-  animals: { name: "Animals", emoji: "🦁", words: ["Elephant","Penguin","Kangaroo","Octopus","Giraffe","Sloth","Flamingo","T-Rex","Hamster","Great White Shark","Bald Eagle","Platypus","Raccoon","Chameleon","Hippo","Jellyfish","Peacock","Skunk","Llama","Owl","Dolphin","Porcupine","Gorilla","Seahorse","Anteater","Cheetah","Walrus","Toucan","Hedgehog","Komodo Dragon"] },
-  movies: { name: "Movies & TV", emoji: "🎬", words: ["Jurassic Park","Finding Nemo","Star Wars","The Office","Titanic","Shrek","Harry Potter","Jaws","Frozen","Stranger Things","The Lion King","Back to the Future","SpongeBob","Toy Story","Indiana Jones","Home Alone","The Simpsons","Ghostbusters","Pirates of the Caribbean","E.T.","Breaking Bad","The Matrix","Rocky","Spider-Man","Forrest Gump","Wednesday","Batman","Elf","Top Gun","Scooby-Doo"] },
-  food: { name: "Food & Drink", emoji: "🍕", words: ["Pizza","Tacos","Spaghetti","Ice Cream Sundae","Guacamole","Cheeseburger","Sushi","Pancakes","Popcorn","Hot Dog","Mac and Cheese","Nachos","Ramen","Donut","Bubble Tea","Grilled Cheese","Burrito","Cotton Candy","French Fries","Milkshake","Pretzel","Cinnamon Roll","Chicken Wings","Root Beer Float","Corn on the Cob","Peanut Butter","Waffles","Lasagna","S'mores","Bagel"] },
-  people: { name: "Famous Folks", emoji: "⭐", words: ["Superhero","Pirate","Rock Star","Astronaut","Ninja","Chef","Cowboy","Mad Scientist","Ballerina","Wizard","Firefighter","Vampire","Cheerleader","Detective","Robot","Clown","Knight","Mermaid","Zombie","Race Car Driver","Lifeguard","Magician","Viking","Opera Singer","Spy","Caveman","Weather Reporter","Gladiator","Mime","Game Show Host"] },
-  actions: { name: "Act It Out", emoji: "🎭", words: ["Brushing Teeth","Riding a Horse","Swimming","Juggling","Shoveling Snow","Karate Chop","Fishing","Playing Drums","Milking a Cow","Bowling","Changing a Diaper","Ironing","Walking a Dog","Golfing","Sneezing","Making Pizza Dough","Jump Rope","Rock Climbing","Texting","Painting a Wall","Slam Dunk","Rowing a Boat","Blowing Out Candles","Snowboarding","Playing Violin","Mowing the Lawn","Taking a Selfie","Yoga","Air Guitar","Building a Sandcastle"] },
-  random: { name: "Grab Bag", emoji: "🎲", words: ["Rainbow","Volcano","Roller Coaster","Bigfoot","Time Machine","Treehouse","Tornado","Disco Ball","Submarine","Haunted House","Fireworks","Quicksand","Igloo","Hot Air Balloon","Traffic Jam","Black Hole","Ferris Wheel","Piñata","Lighthouse","Snow Day","Garage Sale","Full Moon","Campfire","Waterslide","Fortune Cookie","Escalator","Thunderstorm","Vending Machine","Photo Booth","Lava Lamp"] }
+  animals: { name: "Animals", emoji: "🦁", words: [
+    "Elephant","Penguin","Kangaroo","Octopus","Giraffe","Sloth","Flamingo","T-Rex","Hamster","Great White Shark",
+    "Bald Eagle","Platypus","Raccoon","Chameleon","Hippo","Jellyfish","Peacock","Skunk","Llama","Owl",
+    "Dolphin","Porcupine","Gorilla","Seahorse","Anteater","Cheetah","Walrus","Toucan","Hedgehog","Komodo Dragon",
+    "Polar Bear","Koala","Panda","Zebra","Crocodile","Bumblebee","Butterfly","Snail","Meerkat","Lobster",
+    "Squirrel","Goldfish","Rooster","Turkey","Bat","Wolf","Moose","Otter","Beaver","Camel",
+    "Ostrich","Pelican","Hummingbird","Tarantula","Cobra","Chihuahua","Bulldog","Kitten","Goat","Pig",
+    "Donkey","Rhino","Orangutan","Sea Turtle","Stingray","Manatee","Narwhal","Lemur","Armadillo","Firefly"
+  ]},
+  movies: { name: "Movies", emoji: "🎬", words: [
+    "Jurassic Park","Finding Nemo","Star Wars","Titanic","Shrek","Harry Potter","Jaws","Frozen","The Lion King","Back to the Future",
+    "Toy Story","Indiana Jones","Home Alone","Ghostbusters","Pirates of the Caribbean","E.T.","The Matrix","Rocky","Spider-Man","Forrest Gump",
+    "Batman","Elf","Top Gun","Jumanji","The Wizard of Oz","Mary Poppins","Moana","Encanto","Inside Out","Up",
+    "The Incredibles","Cars","Minions","Kung Fu Panda","How to Train Your Dragon","Madagascar","Ratatouille","Coco","Zootopia","Wall-E",
+    "Avatar","Avengers","Iron Man","Black Panther","Wonder Woman","Superman","The Hunger Games","Twilight","Mamma Mia","Grease",
+    "The Sound of Music","Willy Wonka","Jurassic World","King Kong","Godzilla","Men in Black","Mission Impossible","James Bond","Transformers","Cinderella",
+    "Beauty and the Beast","Aladdin","The Little Mermaid","Tangled","Barbie","Oppenheimer","Dune","Wicked","Paddington","Despicable Me"
+  ]},
+  tv: { name: "TV Shows", emoji: "📺", words: [
+    "The Office","Stranger Things","SpongeBob","The Simpsons","Breaking Bad","Wednesday","Scooby-Doo","Friends","Bluey","Paw Patrol",
+    "Sesame Street","Game of Thrones","The Mandalorian","Ted Lasso","Survivor","The Bachelor","Jeopardy","Wheel of Fortune","The Great British Bake Off","MasterChef",
+    "Peppa Pig","Dora the Explorer","Pokémon","Teenage Mutant Ninja Turtles","Squid Game","The Crown","Seinfeld","Family Guy","South Park","Gilmore Girls",
+    "Grey's Anatomy","Law & Order","Doctor Who","Sherlock","Curb Your Enthusiasm","Parks and Recreation","Brooklyn Nine-Nine","Modern Family","The Big Bang Theory","Full House",
+    "Saturday Night Live","American Idol","Shark Tank","Dancing with the Stars","The Price Is Right","Mister Rogers","Arthur","Avatar: The Last Airbender","Gravity Falls","Phineas and Ferb",
+    "Only Murders in the Building","The Bear","Abbott Elementary","Succession","The Last of Us","Cocomelon","Teletubbies","Blue's Clues","Bob's Burgers","Hannah Montana"
+  ]},
+  food: { name: "Food & Drink", emoji: "🍕", words: [
+    "Pizza","Tacos","Spaghetti","Ice Cream Sundae","Guacamole","Cheeseburger","Sushi","Pancakes","Popcorn","Hot Dog",
+    "Mac and Cheese","Nachos","Ramen","Donut","Bubble Tea","Grilled Cheese","Burrito","Cotton Candy","French Fries","Milkshake",
+    "Pretzel","Cinnamon Roll","Chicken Wings","Root Beer Float","Corn on the Cob","Peanut Butter","Waffles","Lasagna","S'mores","Bagel",
+    "Caesar Salad","Chocolate Chip Cookie","Meatballs","Pumpkin Pie","Apple Pie","Cheesecake","Brownie","Cupcake","Jelly Beans","Gummy Bears",
+    "Lollipop","Watermelon","Banana Split","Fried Chicken","Fish and Chips","Pad Thai","Dumplings","Croissant","Pickles","Olives",
+    "Avocado Toast","Hummus","Oatmeal","Cereal","Scrambled Eggs","Bacon","Pepperoni","Garlic Bread","Onion Rings","Coleslaw",
+    "Lemonade","Hot Chocolate","Iced Coffee","Smoothie","Orange Juice","Sparkling Water","Chili","Clam Chowder","Baked Potato","Tiramisu"
+  ]},
+  characters: { name: "Characters", emoji: "🦸", words: [
+    "Superhero","Pirate","Rock Star","Astronaut","Ninja","Cowboy","Mad Scientist","Ballerina","Wizard","Vampire",
+    "Cheerleader","Detective","Robot","Clown","Knight","Mermaid","Zombie","Magician","Viking","Opera Singer",
+    "Spy","Caveman","Gladiator","Mime","Game Show Host","Mickey Mouse","Batman","Elsa","Darth Vader","Harry Potter",
+    "Shrek","Buzz Lightyear","Woody","Spider-Man","Wonder Woman","The Hulk","Yoda","Homer Simpson","Santa Claus","The Grinch",
+    "Winnie the Pooh","Peter Pan","Tinker Bell","Sherlock Holmes","Dracula","Frankenstein","Mario","Sonic the Hedgehog","Pikachu","Barbie",
+    "Ken","Kermit the Frog","Cookie Monster","Elmo","Mary Poppins","Willy Wonka","Indiana Jones","James Bond","The Joker","Captain America",
+    "Thor","Bluey","Peppa Pig","Garfield","Snoopy","Scooby-Doo","Bugs Bunny","Tom and Jerry","Olaf","Moana"
+  ]},
+  actions: { name: "Act It Out", emoji: "🎭", words: [
+    "Brushing Teeth","Riding a Horse","Swimming","Juggling","Shoveling Snow","Karate Chop","Fishing","Playing Drums","Milking a Cow","Bowling",
+    "Changing a Diaper","Ironing","Walking a Dog","Golfing","Sneezing","Making Pizza Dough","Jump Rope","Rock Climbing","Texting","Painting a Wall",
+    "Slam Dunk","Rowing a Boat","Blowing Out Candles","Snowboarding","Playing Violin","Mowing the Lawn","Taking a Selfie","Yoga","Air Guitar","Building a Sandcastle",
+    "Hula Hooping","Flipping Pancakes","Washing Dishes","Tying Shoes","Riding a Bike","Chopping Wood","Cracking an Egg","Skiing","Surfing","Doing Laundry",
+    "Vacuuming","Baking Cookies","Hitting a Piñata","Marching Band","Ballet","Moonwalk","The Floss","Push-ups","Limbo","Cartwheel",
+    "Playing Chess","Blowing Bubbles","Flying a Kite","Feeding a Baby","Popping Popcorn","Petting a Cat","Catching a Fish","Shooting a Free Throw","Serving Tennis","Hitting a Home Run",
+    "Sleepwalking","Waking Up","Falling Asleep","Sunburn","Stubbing a Toe","Being Cold","Being Hot","Hiccups","Laughing","Crying"
+  ]},
+  random: { name: "Grab Bag", emoji: "🎲", words: [
+    "Rainbow","Volcano","Roller Coaster","Bigfoot","Time Machine","Treehouse","Tornado","Disco Ball","Submarine","Haunted House",
+    "Fireworks","Quicksand","Igloo","Hot Air Balloon","Traffic Jam","Black Hole","Ferris Wheel","Piñata","Lighthouse","Snow Day",
+    "Garage Sale","Full Moon","Campfire","Waterslide","Fortune Cookie","Escalator","Thunderstorm","Vending Machine","Photo Booth","Lava Lamp",
+    "Unicorn","Dragon","Treasure Chest","Robot Vacuum","Lemonade Stand","Bouncy Castle","Pillow Fight","Snowball Fight","Water Balloon","Trampoline",
+    "Skateboard","Bunk Bed","Selfie Stick","Wi-Fi","Password","Alarm Clock","Boomerang","Yo-Yo","Rubik's Cube","Lego",
+    "Slime","Glitter","Balloon Animal","Magic Trick","Mustache","Wig","Tattoo","Braces","Glasses","Umbrella",
+    "Bubble Wrap","Sticky Note","Paper Airplane","Origami","Karaoke","Scavenger Hunt","Sleepover","Road Trip","Carnival","Parade"
+  ]},
+  sports: { name: "Sports & Games", emoji: "⚽", words: [
+    "Soccer","Basketball","Baseball","Hockey","Tennis","Golf","Swimming","Gymnastics","Figure Skating","Skateboarding",
+    "Surfing","Bowling","Boxing","Wrestling","Karate","Fencing","Archery","Volleyball","Badminton","Ping Pong",
+    "Rugby","Cricket","Lacrosse","Curling","Snowboarding","Skiing","Marathon","Triathlon","Cheerleading","Rowing",
+    "Football","Touchdown","Slam Dunk","Home Run","Hole in One","Penalty Kick","Free Throw","Hat Trick","Olympics","World Cup",
+    "Super Bowl","Referee","Goalie","Mascot","Trophy","Gold Medal","Chess","Checkers","Monopoly","Uno",
+    "Jenga","Twister","Hide and Seek","Tag","Dodgeball","Hopscotch","Musical Chairs","Tug of War","Pictionary","Charades"
+  ]},
+  music: { name: "Music", emoji: "🎵", words: [
+    "Taylor Swift","Beyoncé","The Beatles","Elvis","Michael Jackson","Ed Sheeran","Adele","Bruno Mars","Billie Eilish","Harry Styles",
+    "Justin Bieber","Lady Gaga","Elton John","Queen","ABBA","Dolly Parton","Bob Marley","Drake","Rihanna","Olivia Rodrigo",
+    "Guitar","Piano","Drums","Violin","Trumpet","Saxophone","Flute","Harmonica","Ukulele","Bagpipes",
+    "Happy Birthday","Twinkle Twinkle Little Star","Baby Shark","Let It Go","Jingle Bells","Old MacDonald","The Wheels on the Bus","YMCA","Bohemian Rhapsody","We Will Rock You",
+    "Sweet Caroline","Don't Stop Believin'","Uptown Funk","Shake It Off","Dancing Queen","Thriller","Hakuna Matata","Under the Sea","Macarena","Cha Cha Slide",
+    "Opera","Rap","Country Music","Jazz","Rock and Roll","Karaoke","DJ","Marching Band","Choir","Lullaby"
+  ]},
+  places: { name: "Around the World", emoji: "🌍", words: [
+    "Eiffel Tower","Statue of Liberty","Great Wall of China","Pyramids of Egypt","Grand Canyon","Big Ben","Taj Mahal","Mount Everest","Niagara Falls","Hollywood",
+    "Disneyland","Las Vegas","New York City","Paris","London","Tokyo","Rome","Sydney","Hawaii","Alaska",
+    "Amazon Rainforest","Sahara Desert","North Pole","Antarctica","Australia","Canada","Mexico","Brazil","Italy","Japan",
+    "China","India","Egypt","Africa","Texas","Florida","California","Beach","Jungle","Desert",
+    "Airport","Hospital","Library","Zoo","Aquarium","Museum","Movie Theater","Grocery Store","Gas Station","Farm",
+    "Castle","Cruise Ship","Space Station","Volcano","Island","Cave","Waterfall","Ski Resort","Summer Camp","Playground"
+  ]},
+  kids: { name: "Kids' Stuff", emoji: "🧸", words: [
+    "Dog","Cat","Cow","Duck","Frog","Fish","Bird","Bunny","Monkey","Lion",
+    "Apple","Banana","Cookie","Cake","Pizza","Milk","Juice","Candy","Carrot","Egg",
+    "Ball","Kite","Doll","Teddy Bear","Blocks","Puzzle","Bubbles","Crayons","Bike","Swing",
+    "Slide","Sandbox","Bathtub","Toothbrush","Pajamas","Blanket","Pillow","Shoes","Hat","Socks",
+    "Sun","Moon","Star","Rain","Snow","Rainbow","Cloud","Tree","Flower","Grass",
+    "Car","Bus","Train","Airplane","Boat","Fire Truck","Tractor","Rocket","Helicopter","Bicycle",
+    "Mommy","Daddy","Grandma","Grandpa","Baby","Teacher","Doctor","Firefighter","Police Officer","Mail Carrier",
+    "Jumping","Dancing","Sleeping","Eating","Hugging","Clapping","Running","Singing","Giggling","Waving"
+  ]},
+  impressions: { name: "Impressions", emoji: "🗣️", words: [
+    "Pirate","Cowboy","Robot","Baby","Grumpy Old Man","Valley Girl","Surfer Dude","Opera Singer","Drill Sergeant","Sports Announcer",
+    "Weather Reporter","Auctioneer","Game Show Host","Flight Attendant","Yoga Instructor","Mad Scientist","Evil Villain","Superhero","Ghost","Vampire",
+    "Witch","Santa Claus","Elf","Chicken","Cow","Monkey","Dog","Cat","Duck","Lion",
+    "British Accent","Australian Accent","French Accent","Southern Accent","New Yorker","Canadian","Scottish Accent","Italian Chef","Darth Vader","Yoda",
+    "Kermit the Frog","Elmo","Mickey Mouse","Scooby-Doo","Shrek","Homer Simpson","Bugs Bunny","Donald Duck","Minion","Elvis",
+    "Toddler Tantrum","Teenager","Someone Who's Freezing","Someone Who's Sleepy","Someone Sneaking","Someone at the Dentist","Speed Talker","Slow Motion","Whisperer","Bad Singer"
+  ]},
+  holidays: { name: "Holidays", emoji: "🎄", words: [
+    "Christmas Tree","Santa Claus","Reindeer","Snowman","Stocking","Gingerbread House","Candy Cane","Elf","Mistletoe","Ugly Sweater",
+    "Jack-o'-Lantern","Trick or Treat","Witch","Ghost","Haunted House","Skeleton","Costume","Mummy","Black Cat","Candy Corn",
+    "Turkey","Pilgrim","Cranberry Sauce","Pumpkin Pie","Wishbone","Easter Bunny","Egg Hunt","Chocolate Egg","Leprechaun","Four-Leaf Clover",
+    "Fireworks","Barbecue","Sparklers","Flag","Parade","Cupid","Valentine","Heart","Roses","Chocolate Box",
+    "Birthday Cake","Balloons","Piñata","Party Hat","Presents","New Year's Eve","Countdown","Confetti","Champagne","Resolution",
+    "Menorah","Dreidel","Latkes","Diwali Lamp","Lunar New Year","Dragon Dance","Red Envelope","Mother's Day","Father's Day","Summer Vacation"
+  ]},
+  science: { name: "Science & Space", emoji: "🚀", words: [
+    "Rocket","Astronaut","Moon Landing","Black Hole","Solar System","Saturn","Mars","Jupiter","Milky Way","Shooting Star",
+    "Comet","Meteor","Telescope","Satellite","Space Station","Alien","UFO","Gravity","Eclipse","Constellation",
+    "Dinosaur","Fossil","Volcano","Earthquake","Tsunami","Lightning","Tornado","Magnet","Electricity","Battery",
+    "Microscope","Bacteria","Virus","DNA","Brain","Heart","Skeleton","Lungs","Robot","Laser",
+    "Albert Einstein","Isaac Newton","Marie Curie","Charles Darwin","Thomas Edison","Nikola Tesla","Galileo","Stephen Hawking","Neil Armstrong","Jane Goodall",
+    "Chemistry Set","Volcano Experiment","Baking Soda","Periodic Table","Atom","Rainbow","Photosynthesis","Evolution","Hurricane","Ice Age"
+  ]},
+  jobs: { name: "Jobs", emoji: "👩‍🚒", words: [
+    "Firefighter","Police Officer","Doctor","Nurse","Dentist","Veterinarian","Teacher","Chef","Pilot","Astronaut",
+    "Farmer","Construction Worker","Plumber","Electrician","Mechanic","Mail Carrier","Garbage Collector","Bus Driver","Taxi Driver","Truck Driver",
+    "Lifeguard","Coach","Referee","Race Car Driver","Movie Star","Rock Star","News Anchor","Weather Reporter","Photographer","Painter",
+    "Hairdresser","Barber","Tattoo Artist","Fashion Designer","Model","Magician","Clown","Juggler","Ballet Dancer","DJ",
+    "Scientist","Inventor","Archaeologist","Zookeeper","Marine Biologist","Librarian","Lawyer","Judge","President","Queen",
+    "Knight","Pirate","Ninja","Spy","Detective","Soldier","Cowboy","Waiter","Cashier","Babysitter"
+  ]},
+  noises: { name: "Make the Noise", emoji: "🔊", words: [
+    "Rooster","Cow","Sheep","Pig","Duck","Owl","Monkey","Lion","Wolf","Elephant",
+    "Cat","Dog","Frog","Cricket","Mosquito","Bee","Snake","Horse","Donkey","Seagull",
+    "Police Siren","Fire Truck","Car Horn","Motorcycle","Helicopter","Airplane","Train","Race Car","Doorbell","Alarm Clock",
+    "Microwave","Blender","Vacuum Cleaner","Lawn Mower","Chainsaw","Drill","Toilet Flush","Popcorn Popping","Kettle Whistle","Squeaky Door",
+    "Thunder","Rain","Wind","Ocean Waves","Crackling Fire","Baby Crying","Snoring","Sneezing","Hiccups","Burp",
+    "Drum Roll","Guitar Solo","Trumpet","Violin","Bagpipes","Opera Singer","Beatbox","Whistle","Applause","Evil Laugh"
+  ]},
+  videogames: { name: "Video Games", emoji: "🎮", words: [
+    "Mario","Luigi","Princess Peach","Bowser","Yoshi","Donkey Kong","Sonic","Pikachu","Pokémon","Minecraft",
+    "Creeper","Fortnite","Roblox","Among Us","Pac-Man","Tetris","Zelda","Link","Kirby","Animal Crossing",
+    "Mario Kart","Super Smash Bros","Just Dance","Wii Sports","Angry Birds","Candy Crush","Fruit Ninja","Temple Run","Subway Surfers","Flappy Bird",
+    "Nintendo Switch","PlayStation","Xbox","Game Boy","Joystick","High Score","Extra Life","Boss Battle","Power-Up","Game Over",
+    "Space Invaders","Frogger","Donkey Kong Barrel","Rainbow Road","Mushroom","Gold Coin","Lego Game","Overcooked","Stardew Valley","The Sims",
+    "FIFA","Madden","Rocket League","Splatoon","Pokémon Go","Wordle","Solitaire","Minesweeper","Pinball","Arcade"
+  ]},
+  disney: { name: "Disney & Pixar", emoji: "🏰", words: [
+    "Mickey Mouse","Minnie Mouse","Donald Duck","Goofy","Pluto","Elsa","Anna","Olaf","Moana","Maui",
+    "Simba","Mufasa","Scar","Timon and Pumbaa","Ariel","Sebastian","Ursula","Belle","Beast","Lumière",
+    "Aladdin","Genie","Jasmine","Jafar","Cinderella","Snow White","Sleeping Beauty","Rapunzel","Tiana","Mulan",
+    "Pocahontas","Peter Pan","Tinker Bell","Captain Hook","Pinocchio","Dumbo","Bambi","Stitch","Lilo","Winnie the Pooh",
+    "Tigger","Eeyore","Woody","Buzz Lightyear","Nemo","Dory","Mike Wazowski","Sulley","Lightning McQueen","Mater",
+    "Mr. Incredible","Elastigirl","Edna Mode","Wall-E","Remy","Carl and Russell","Dug","Joy","Sadness","Anger",
+    "Miguel","Mirabel","Bruno","Raya","Baymax","Zootopia","Encanto","Coco","Toy Story","Frozen"
+  ]},
+  house: { name: "Around the House", emoji: "🏠", words: [
+    "Toilet","Bathtub","Shower","Toothbrush","Hair Dryer","Mirror","Towel","Toilet Paper","Bed","Pillow",
+    "Blanket","Alarm Clock","Lamp","Closet","Hanger","Laundry Basket","Washing Machine","Dryer","Iron","Vacuum Cleaner",
+    "Couch","TV Remote","Coffee Table","Bookshelf","Fireplace","Curtains","Rug","Front Door","Doorbell","Mailbox",
+    "Refrigerator","Microwave","Oven","Toaster","Blender","Coffee Maker","Dishwasher","Sink","Frying Pan","Spatula",
+    "Fork","Knife","Spoon","Plate","Mug","Trash Can","Sponge","Broom","Mop","Garden Hose",
+    "Lawn Mower","Garage","Ladder","Hammer","Screwdriver","Duct Tape","Flashlight","Umbrella","Keys","Wi-Fi Router"
+  ]},
+  famous: { name: "Famous People", emoji: "⭐", words: [
+    "Taylor Swift","Beyoncé","Oprah","Tom Hanks","Dwayne Johnson","Will Smith","Jennifer Lopez","Adam Sandler","Keanu Reeves","Ryan Reynolds",
+    "Zendaya","Timothée Chalamet","Leonardo DiCaprio","Meryl Streep","Julia Roberts","Brad Pitt","Jim Carrey","Robin Williams","Eddie Murphy","Kevin Hart",
+    "LeBron James","Michael Jordan","Serena Williams","Tom Brady","Lionel Messi","Cristiano Ronaldo","Simone Biles","Tiger Woods","Shaquille O'Neal","Usain Bolt",
+    "Elon Musk","Bill Gates","Steve Jobs","Mark Zuckerberg","Jeff Bezos","Walt Disney","Albert Einstein","Abraham Lincoln","George Washington","Barack Obama",
+    "Queen Elizabeth","Princess Diana","Prince Harry","Mr. Bean","Gordon Ramsay","Martha Stewart","Steve Irwin","David Attenborough","Bob Ross","Mr. Rogers",
+    "Elvis","Michael Jackson","Madonna","Dolly Parton","Snoop Dogg","Ed Sheeran","Adele","Justin Bieber","Harry Styles","Bad Bunny"
+  ]},
+  brands: { name: "Brands & Logos", emoji: "🏷️", words: [
+    "McDonald's","Starbucks","Coca-Cola","Pepsi","Nike","Adidas","Apple","Google","Amazon","Netflix",
+    "Disney","Lego","Barbie","Hot Wheels","Nintendo","PlayStation","Xbox","YouTube","TikTok","Instagram",
+    "Facebook","Snapchat","Spotify","Uber","Airbnb","Tesla","Ferrari","Jeep","Toyota","Ford",
+    "Walmart","Target","Costco","IKEA","Home Depot","Dollar Store","Old Navy","Gap","Lululemon","Crocs",
+    "Oreo","Doritos","Cheerios","Kellogg's","Pringles","Kit Kat","M&M's","Skittles","Gatorade","Red Bull",
+    "Subway","Domino's","Pizza Hut","Taco Bell","KFC","Chipotle","Dunkin'","Tim Hortons","Ben & Jerry's","Chick-fil-A"
+  ]},
+  nature: { name: "Nature & Weather", emoji: "🌦️", words: [
+    "Sunshine","Rainbow","Thunderstorm","Lightning","Tornado","Hurricane","Blizzard","Hail","Fog","Heat Wave",
+    "Snowflake","Icicle","Frost","Dew","Puddle","Flood","Drought","Wind","Breeze","Cloud",
+    "Mountain","Volcano","Canyon","Cave","River","Waterfall","Lake","Ocean","Beach","Island",
+    "Desert","Jungle","Forest","Swamp","Meadow","Glacier","Iceberg","Geyser","Hot Spring","Coral Reef",
+    "Oak Tree","Palm Tree","Cactus","Sunflower","Rose","Dandelion","Mushroom","Moss","Seaweed","Bamboo",
+    "Sunrise","Sunset","Full Moon","Shooting Star","Northern Lights","Eclipse","Earthquake","Avalanche","Wildfire","Tide Pool"
+  ]},
+  vehicles: { name: "Vehicles & Travel", emoji: "🚗", words: [
+    "Car","Bus","Train","Airplane","Helicopter","Rocket","Boat","Sailboat","Cruise Ship","Submarine",
+    "Bicycle","Tricycle","Scooter","Skateboard","Roller Skates","Motorcycle","Monster Truck","Race Car","Fire Truck","Ambulance",
+    "Police Car","Taxi","Limousine","School Bus","Tractor","Bulldozer","Crane","Cement Mixer","Garbage Truck","Ice Cream Truck",
+    "Hot Air Balloon","Blimp","Jet Ski","Kayak","Canoe","Gondola","Ferry","Hovercraft","Snowmobile","Golf Cart",
+    "Horse and Carriage","Camel","Elephant Ride","Dog Sled","Space Shuttle","Time Machine","Magic Carpet","Broomstick","Sleigh","Unicycle",
+    "Suitcase","Passport","Airport","Road Trip","Traffic Jam","Parking Ticket","Drive-Thru","Car Wash","Gas Station","Rest Stop"
+  ]},
+  books: { name: "Books & Fairy Tales", emoji: "📚", words: [
+    "Cinderella","Snow White","Little Red Riding Hood","The Three Little Pigs","Goldilocks","Jack and the Beanstalk","Hansel and Gretel","Rapunzel","Sleeping Beauty","The Gingerbread Man",
+    "Humpty Dumpty","Pinocchio","The Ugly Duckling","The Tortoise and the Hare","Rumpelstiltskin","The Princess and the Pea","The Little Mermaid","Aladdin","Robin Hood","King Arthur",
+    "Harry Potter","Hermione","Dumbledore","Voldemort","The Hobbit","Gandalf","Percy Jackson","Katniss Everdeen","Matilda","Charlie and the Chocolate Factory",
+    "The Cat in the Hat","Green Eggs and Ham","The Very Hungry Caterpillar","Where the Wild Things Are","Curious George","Winnie the Pooh","Paddington Bear","Peter Rabbit","Charlotte's Web","Diary of a Wimpy Kid",
+    "Dog Man","Captain Underpants","Nancy Drew","Sherlock Holmes","Dracula","Frankenstein","Alice in Wonderland","The Wizard of Oz","Peter Pan","Mary Poppins",
+    "The Lorax","Goodnight Moon","Pete the Cat","Magic Tree House","Narnia","Big Bad Wolf","Fairy Godmother","Genie","Dragon","Wicked Witch"
+  ]},
+  nineties: { name: "Blast from the Past", emoji: "📼", words: [
+    "Walkman","Boombox","Cassette Tape","VHS Tape","Blockbuster","Dial-Up Internet","Floppy Disk","Pager","Flip Phone","Game Boy",
+    "Tamagotchi","Furby","Beanie Babies","Pogs","Slap Bracelet","Yo-Yo","Etch A Sketch","Lite-Brite","Rollerblades","Skip-It",
+    "Nintendo 64","Pokémon Cards","Power Rangers","Rugrats","Barney","Teletubbies","Full House","Fresh Prince","Friends","Seinfeld",
+    "Spice Girls","Backstreet Boys","NSYNC","Britney Spears","Macarena","Titanic","Jurassic Park","Home Alone","Toy Story","The Lion King",
+    "Disposable Camera","Polaroid","Encyclopedia","Phone Book","Typewriter","Record Player","Jukebox","Drive-In Movie","Roller Rink","Arcade",
+    "Fanny Pack","Scrunchie","Mullet","Frosted Tips","Butterfly Clips","Bell Bottoms","Overalls","Neon Windbreaker","Leg Warmers","Mood Ring"
+  ]}
+};
+const SPECIAL = {
+  everything: { name: "Everything", emoji: "🌀", special: true },
+  custom:     { name: "Your Deck", emoji: "✏️", special: true }
 };
 
-const ROUND_SECONDS = 60;
-let selectedDeck = null;
-let tiltEnabled = false;
-let gameActive = false;
+/* =========================================================
+   STATE & STORAGE
+   ========================================================= */
+const $ = id => document.getElementById(id);
+const store = {
+  get(k, d) { try { const v = localStorage.getItem("headsup." + k); return v == null ? d : JSON.parse(v); } catch(e) { return d; } },
+  set(k, v) { try { localStorage.setItem("headsup." + k, JSON.stringify(v)); } catch(e) {} }
+};
+const isTouch = matchMedia("(pointer: coarse)").matches || "ontouchstart" in window;
+
+const settings = {
+  seconds: store.get("seconds", 60),
+  tilt:    store.get("tilt", isTouch),
+  sound:   store.get("sound", true),
+  haptic:  store.get("haptic", true),
+  fullscreen: store.get("fullscreen", isTouch),
+  teams:   store.get("teams", false),
+  teamNames: store.get("teamNames", ["Team 1", "Team 2"])
+};
+let customWords = store.get("custom", []);
+let best = store.get("best", {});
+let selectedDeck = store.get("deck", null);
+let teamScores = [0, 0];
+let currentTeam = 0;
+
+let gameActive = false;   // a word is on screen and can be marked
+let roundRunning = false; // timer is running
+let paused = false;
 let deckWords = [];
 let currentWord = "";
 let score = 0;
+let streak = 0;
 let history = [];
-let timeLeft = ROUND_SECONDS;
-let timerId = null;
-let tiltReady = true; // debounce for orientation
+let endAt = 0;
+let remainingMs = 0;
+let tickId = null;
+let lastBeepSecond = -1;
+let wakeLock = null;
 
-const $ = id => document.getElementById(id);
-const screens = ["home","countdown","game","results"];
-function show(id) {
-  screens.forEach(s => $(s).classList.toggle("active", s === id));
-}
+const screens = ["home","custom","countdown","game","timesup","results"];
+function show(id) { screens.forEach(s => $(s).classList.toggle("active", s === id)); }
 
-/* ---- sounds ---- */
+/* =========================================================
+   SOUND & HAPTICS
+   ========================================================= */
 let audioCtx = null;
 function beep(freq, dur = .12, type = "square", vol = .15) {
+  if (!settings.sound) return;
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === "suspended") audioCtx.resume();
     const o = audioCtx.createOscillator(), g = audioCtx.createGain();
     o.type = type; o.frequency.value = freq;
     g.gain.setValueAtTime(vol, audioCtx.currentTime);
@@ -351,78 +853,279 @@ function beep(freq, dur = .12, type = "square", vol = .15) {
     o.start(); o.stop(audioCtx.currentTime + dur);
   } catch(e) {}
 }
+function buzz(pattern) {
+  if (!settings.haptic) return;
+  try { navigator.vibrate && navigator.vibrate(pattern); } catch(e) {}
+}
+let toastId = null;
+function toast(msg, ms = 2200) {
+  const t = $("toast");
+  t.textContent = msg; t.classList.add("show");
+  clearTimeout(toastId);
+  toastId = setTimeout(() => t.classList.remove("show"), ms);
+}
 
-/* ---- home / deck picker ---- */
-const catsEl = $("cats");
-Object.entries(DECKS).forEach(([key, deck]) => {
-  const b = document.createElement("button");
-  b.className = "cat";
-  b.innerHTML = `<span class="emoji">${deck.emoji}</span>${deck.name}`;
-  b.onclick = () => {
-    selectedDeck = key;
-    document.querySelectorAll(".cat").forEach(c => c.classList.remove("selected"));
-    b.classList.add("selected");
-    $("startBtn").disabled = false;
-    $("startBtn").textContent = "START ROUND";
-  };
-  catsEl.appendChild(b);
-});
+/* =========================================================
+   TILT CONTROLS
+   ---------------------------------------------------------
+   faceValue = cos(beta) * cos(gamma) is the vertical component of the
+   screen's normal: +1 screen faces the ceiling (tilt UP -> pass),
+   0 phone upright at the forehead, -1 screen faces the floor
+   (tilt DOWN -> got it). Works in portrait or landscape.
 
-/* ---- tilt permission ---- */
-$("tiltBtn").onclick = async () => {
-  if (typeof DeviceOrientationEvent !== "undefined" &&
-      typeof DeviceOrientationEvent.requestPermission === "function") {
-    try {
-      const res = await DeviceOrientationEvent.requestPermission();
-      tiltEnabled = res === "granted";
-    } catch(e) { tiltEnabled = false; }
-  } else {
-    tiltEnabled = !tiltEnabled;
+   Why the old version "didn't turn on": iOS only hands out motion
+   data after DeviceOrientationEvent.requestPermission() is called
+   from a tap, and the old game only did that from a small Enable
+   button. Now the Start button requests it too, and the home screen
+   shows whether data is actually arriving.
+   ========================================================= */
+const Tilt = {
+  status: "idle",   // idle | granted | denied | unsupported | nodata
+  face: 0,
+  lastEventAt: 0,
+  armed: true,
+  hits: 0,
+  watchdog: null,
+  listening: false,
+  isIOS: /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1),
+
+  async enable() {
+    if (!("DeviceOrientationEvent" in window) && !("DeviceMotionEvent" in window)) {
+      this.status = "unsupported"; this.render(); return false;
+    }
+    const DOE = window.DeviceOrientationEvent, DME = window.DeviceMotionEvent;
+    if (DOE && typeof DOE.requestPermission === "function") {
+      try {
+        const res = await DOE.requestPermission();
+        if (res !== "granted") { this.status = "denied"; this.render(); return false; }
+      } catch(e) { this.status = "denied"; this.render(); return false; }
+      try { if (DME && typeof DME.requestPermission === "function") await DME.requestPermission(); } catch(e) {}
+    }
+    this.status = "granted";
+    this.listen();
+    this.render();
+    // If no data shows up shortly, tell the user (e.g. http:// page, desktop, sensors off)
+    clearTimeout(this.watchdog);
+    this.watchdog = setTimeout(() => {
+      if (Date.now() - this.lastEventAt > 1500) { this.status = "nodata"; this.render(); }
+    }, 1800);
+    return true;
+  },
+
+  listen() {
+    if (this.listening) return;
+    this.listening = true;
+    window.addEventListener("deviceorientation", e => {
+      if (e.beta == null || e.gamma == null) return;
+      const rad = d => d * Math.PI / 180;
+      this.onFace(Math.cos(rad(e.beta)) * Math.cos(rad(e.gamma)), "orientation");
+    });
+    window.addEventListener("devicemotion", e => {
+      // Fallback only if orientation events are not flowing.
+      if (Date.now() - this.lastOrientationAt < 600) return;
+      const g = e.accelerationIncludingGravity;
+      if (!g || g.z == null) return;
+      const mag = Math.hypot(g.x || 0, g.y || 0, g.z || 0) || 1;
+      let face = g.z / mag;
+      if (this.isIOS) face = -face; // iOS reports gravity with the opposite sign
+      this.onFace(face, "motion");
+    });
+  },
+  lastOrientationAt: 0,
+
+  onFace(face, source) {
+    const now = Date.now();
+    this.lastEventAt = now;
+    if (source === "orientation") this.lastOrientationAt = now;
+    if (this.status === "nodata") this.status = "granted";
+    this.face = face;
+    this.renderGauge();
+
+    if (!settings.tilt) return;
+    // Re-arm only once the phone is back near upright
+    if (!this.armed) { if (Math.abs(face) < 0.3) { this.armed = true; this.hits = 0; } return; }
+    if (!gameActive || paused) return;
+
+    const DOWN = -0.5, UP = 0.5;
+    if (face < DOWN || face > UP) {
+      this.hits++;
+      if (this.hits >= 2) { this.armed = false; this.hits = 0; mark(face < DOWN); }
+    } else this.hits = 0;
+  },
+
+  render() {
+    const btn = $("tiltBtn"), st = $("tiltStatus"), info = $("tiltInfo");
+    btn.textContent = settings.tilt ? "On" : "Off";
+    btn.className = "toggle" + (settings.tilt ? " on" : "");
+    info.classList.toggle("hidden", !settings.tilt);
+    st.className = "tilt-status";
+    if (!settings.tilt) return;
+    switch (this.status) {
+      case "idle": st.textContent = "Tap Start to allow motion access."; break;
+      case "granted": st.textContent = "✓ Motion sensors working. Tilt your phone to test."; st.classList.add("ok"); break;
+      case "denied": st.textContent = "✗ Motion access was denied. Reload the page and tap Allow. Taps still work."; st.classList.add("bad"); btn.classList.add("warn"); break;
+      case "unsupported": st.textContent = "✗ This device has no motion sensors. Use taps instead."; st.classList.add("bad"); break;
+      case "nodata": st.textContent = "✗ No motion data yet. On a phone make sure the page is on https:// and motion sensors are allowed. Taps still work."; st.classList.add("bad"); btn.classList.add("warn"); break;
+    }
+    this.renderGauge();
+  },
+  renderGauge() {
+    if (!$("home").classList.contains("active")) return;
+    const pct = 50 + Math.max(-1, Math.min(1, -this.face)) * 48; // left = up/pass, right = down/got it
+    $("gaugeDot").style.left = pct + "%";
   }
-  const btn = $("tiltBtn");
-  btn.textContent = tiltEnabled ? "On" : "Enable";
-  btn.classList.toggle("on", tiltEnabled);
 };
 
-/*
-  Tilt detection: compute how much the screen faces the ceiling vs the floor.
-  faceValue = cos(beta) * cos(gamma)
-    +1 → screen flat, facing the ceiling (tilt UP  → pass)
-     0 → phone vertical at your forehead (neutral)
-    -1 → screen facing the floor        (tilt DOWN → correct)
-  Works whether the phone is held in portrait or landscape.
-*/
-const rad = d => d * Math.PI / 180;
-window.addEventListener("deviceorientation", e => {
-  if (!tiltEnabled || e.beta == null || e.gamma == null) return;
-  const faceValue = Math.cos(rad(e.beta)) * Math.cos(rad(e.gamma));
+/* =========================================================
+   HOME SCREEN
+   ========================================================= */
+function deckWordsFor(key) {
+  if (key === "everything") return Object.values(DECKS).flatMap(d => d.words);
+  if (key === "custom") return customWords;
+  return DECKS[key] ? DECKS[key].words : [];
+}
+function deckInfo(key) { return DECKS[key] || SPECIAL[key]; }
+function bestKey() { return `${selectedDeck}:${settings.seconds}`; }
 
-  // Require a return to (near) vertical before accepting the next tilt
-  if (!tiltReady) {
-    if (Math.abs(faceValue) < 0.3) tiltReady = true;
-    return;
-  }
-  if (!gameActive) return;
+function buildDecks() {
+  const catsEl = $("cats");
+  catsEl.innerHTML = "";
+  const all = { ...DECKS, ...SPECIAL };
+  Object.entries(all).forEach(([key, deck]) => {
+    const b = document.createElement("button");
+    b.className = "cat" + (deck.special ? " special" : "");
+    const n = deckWordsFor(key).length;
+    const bestScore = best[`${key}:${settings.seconds}`];
+    b.innerHTML = `<span class="emoji">${deck.emoji}</span>${deck.name}<span class="count">${key === "custom" ? (n ? n + " words · tap to edit" : "tap to create") : n + " words"}</span>` +
+      (bestScore ? `<span class="best">best ${bestScore}</span>` : "");
+    b.dataset.key = key;
+    b.onclick = () => {
+      if (key === "custom" && (selectedDeck === "custom" || customWords.length < 5)) { openCustom(); return; }
+      selectDeck(key);
+    };
+    catsEl.appendChild(b);
+  });
+  if (selectedDeck && deckWordsFor(selectedDeck).length >= 5) selectDeck(selectedDeck); else { selectedDeck = null; updateStart(); }
+}
+function selectDeck(key) {
+  selectedDeck = key;
+  store.set("deck", key);
+  document.querySelectorAll(".cat").forEach(c => c.classList.toggle("selected", c.dataset.key === key));
+  updateStart();
+}
+function updateStart() {
+  const btn = $("startBtn");
+  const ok = selectedDeck && deckWordsFor(selectedDeck).length >= 5;
+  btn.disabled = !ok;
+  if (!ok) btn.textContent = "PICK A DECK";
+  else if (settings.teams) btn.textContent = `START · ${teamName(currentTeam).toUpperCase()}`;
+  else btn.textContent = "START ROUND";
+  $("deckMeta").textContent = ok ? `${deckInfo(selectedDeck).emoji} ${deckInfo(selectedDeck).name}` : "";
+}
 
-  if (faceValue < -0.55) {       // tipped face-down → correct
-    tiltReady = false;
-    mark(true);
-  } else if (faceValue > 0.55) { // tipped face-up → pass
-    tiltReady = false;
-    mark(false);
-  }
+/* settings UI */
+function renderSettings() {
+  document.querySelectorAll("#lenSeg button").forEach(b => b.classList.toggle("on", +b.dataset.v === settings.seconds));
+  const t = (id, on) => { const b = $(id); b.textContent = on ? "On" : "Off"; b.classList.toggle("on", on); };
+  t("soundBtn", settings.sound); t("hapticBtn", settings.haptic); t("fsBtn", settings.fullscreen); t("teamBtn", settings.teams);
+  $("teamInfo").classList.toggle("hidden", !settings.teams);
+  $("team1Name").value = settings.teamNames[0]; $("team2Name").value = settings.teamNames[1];
+  renderMiniBoard();
+  Tilt.render();
+  updateStart();
+}
+function teamName(i) { return (settings.teamNames[i] || "").trim() || `Team ${i + 1}`; }
+function renderMiniBoard() {
+  $("miniBoard").innerHTML = [0, 1].map(i =>
+    `<div class="team${currentTeam === i ? " up" : ""}">${teamName(i)}<b>${teamScores[i]}</b>${currentTeam === i ? "<div style='font-size:.7rem;opacity:.7'>up next</div>" : ""}</div>`).join("");
+}
+document.querySelectorAll("#lenSeg button").forEach(b => b.onclick = () => {
+  settings.seconds = +b.dataset.v; store.set("seconds", settings.seconds); renderSettings(); buildDecks();
 });
+$("soundBtn").onclick = () => { settings.sound = !settings.sound; store.set("sound", settings.sound); renderSettings(); if (settings.sound) beep(660, .08); };
+$("hapticBtn").onclick = () => { settings.haptic = !settings.haptic; store.set("haptic", settings.haptic); renderSettings(); buzz(30); };
+$("fsBtn").onclick = () => { settings.fullscreen = !settings.fullscreen; store.set("fullscreen", settings.fullscreen); renderSettings(); };
+$("teamBtn").onclick = () => { settings.teams = !settings.teams; store.set("teams", settings.teams); renderSettings(); };
+$("resetScores").onclick = () => { teamScores = [0, 0]; currentTeam = 0; renderSettings(); toast("Scores reset"); };
+["team1Name", "team2Name"].forEach((id, i) => $(id).oninput = e => {
+  settings.teamNames[i] = e.target.value; store.set("teamNames", settings.teamNames); renderMiniBoard(); updateStart();
+});
+$("tiltBtn").onclick = async () => {
+  settings.tilt = !settings.tilt; store.set("tilt", settings.tilt);
+  Tilt.render();
+  if (settings.tilt) await Tilt.enable();   // must happen inside the tap for iOS
+};
 
-/* ---- start flow ---- */
-$("startBtn").onclick = startCountdown;
-$("againBtn").onclick = startCountdown;
-$("homeBtn").onclick = () => show("home");
+/* custom deck */
+function openCustom() {
+  $("customText").value = customWords.join("\n");
+  updateCustomCount();
+  show("custom");
+  setTimeout(() => $("customText").focus(), 50);
+}
+function parseCustom() {
+  return [...new Set($("customText").value.split(/\n/).map(s => s.trim()).filter(Boolean))];
+}
+function updateCustomCount() {
+  const n = parseCustom().length;
+  $("customCount").textContent = n + (n === 1 ? " word" : " words") + (n < 5 ? " · add at least 5" : "");
+  $("customSave").disabled = n < 5 && n !== 0;
+}
+$("customText").oninput = updateCustomCount;
+$("customSave").onclick = () => {
+  customWords = parseCustom();
+  store.set("custom", customWords);
+  if (customWords.length >= 5) selectedDeck = "custom";
+  else if (selectedDeck === "custom") selectedDeck = null;
+  show("home"); buildDecks();
+  if (customWords.length >= 5) toast(`Saved ${customWords.length} words`);
+};
+$("customCancel").onclick = () => show("home");
+
+/* =========================================================
+   ROUND FLOW
+   ========================================================= */
+let starting = false;
+$("startBtn").onclick = async () => {
+  if (starting) return;
+  starting = true;
+  beep(660, .05, "sine", .05); // unlocks audio on iOS
+  goFullscreen();              // fire and forget: never let it block the round
+  try {
+    if (settings.tilt && Tilt.status !== "granted") {
+      // Ask inside the tap gesture (iOS needs that), but never hang the game on it.
+      await Promise.race([Tilt.enable(), new Promise(r => setTimeout(r, 8000))]);
+    }
+  } catch(e) {}
+  starting = false;
+  startCountdown();
+};
+$("againBtn").onclick = () => { if (settings.teams) currentTeam = 1 - currentTeam; startCountdown(); };
+$("homeBtn").onclick = () => { if (settings.teams) currentTeam = 1 - currentTeam; renderSettings(); buildDecks(); show("home"); };
+
+function goFullscreen() {
+  if (!settings.fullscreen || !isTouch) return;
+  try {
+    const el = document.documentElement;
+    if (!document.fullscreenElement && el.requestFullscreen) {
+      const p = el.requestFullscreen({ navigationUI: "hide" });
+      if (p && p.catch) p.catch(() => {});
+    }
+  } catch(e) {}
+}
+async function requestWakeLock() {
+  try { if ("wakeLock" in navigator) wakeLock = await navigator.wakeLock.request("screen"); } catch(e) {}
+}
+function releaseWakeLock() { try { wakeLock && wakeLock.release(); } catch(e) {} wakeLock = null; }
 
 function startCountdown() {
   if (!selectedDeck) return;
-  deckWords = shuffle([...DECKS[selectedDeck].words]);
-  score = 0; history = []; timeLeft = ROUND_SECONDS;
+  deckWords = shuffle([...deckWordsFor(selectedDeck)]);
+  score = 0; streak = 0; history = [];
+  $("countTeam").classList.toggle("hidden", !settings.teams);
+  $("countTeam").textContent = settings.teams ? `${teamName(currentTeam)}, you're up!` : "";
   show("countdown");
+  requestWakeLock();
   let n = 3;
   $("countNum").textContent = n;
   beep(440);
@@ -443,34 +1146,61 @@ function startCountdown() {
 }
 
 function startGame() {
-  gameActive = true;
+  roundRunning = true; paused = false;
+  Tilt.armed = true; Tilt.hits = 0;
+  $("tiltHint").classList.toggle("hidden", !settings.tilt);
+  $("scorePill").textContent = "0";
+  $("streak").classList.remove("show");
+  $("timerBar").classList.remove("hurry"); $("timerText").classList.remove("hurry");
+  $("pause").classList.remove("show");
   show("game");
+  remainingMs = settings.seconds * 1000;
+  endAt = Date.now() + remainingMs;
+  lastBeepSecond = -1;
   nextWord();
-  updateTimer();
-  timerId = setInterval(() => {
-    timeLeft--;
-    updateTimer();
-    if (timeLeft <= 5 && timeLeft > 0) beep(660, .08, "sine", .1);
-    if (timeLeft <= 0) endGame();
-  }, 1000);
+  gameActive = true;
+  clearInterval(tickId);
+  tickId = setInterval(tick, 100);
+  tick();
 }
 
-function updateTimer() {
-  $("timerText").textContent = timeLeft;
-  $("timerBar").style.width = (timeLeft / ROUND_SECONDS * 100) + "%";
+function tick() {
+  if (paused) return;
+  remainingMs = Math.max(0, endAt - Date.now());
+  const secs = Math.ceil(remainingMs / 1000);
+  $("timerText").textContent = secs;
+  $("timerBar").style.width = (remainingMs / (settings.seconds * 1000) * 100) + "%";
+  const hurry = secs <= 5;
+  $("timerBar").classList.toggle("hurry", hurry);
+  $("timerText").classList.toggle("hurry", hurry);
+  if (hurry && secs > 0 && secs !== lastBeepSecond) { lastBeepSecond = secs; beep(660, .08, "sine", .1); }
+  if (remainingMs <= 0) timeUp();
 }
 
 function nextWord() {
-  if (deckWords.length === 0) deckWords = shuffle([...DECKS[selectedDeck].words]);
+  if (deckWords.length === 0) deckWords = shuffle([...deckWordsFor(selectedDeck)]);
   currentWord = deckWords.pop();
-  $("word").textContent = currentWord;
+  const w = $("word");
+  w.textContent = currentWord;
+  w.classList.remove("new"); void w.offsetWidth; w.classList.add("new");
 }
 
 function mark(correct) {
-  if (!gameActive) return;
+  if (!gameActive || paused) return;
+  gameActive = false;
   history.push({ word: currentWord, got: correct });
-  if (correct) { score++; beep(880, .15); setTimeout(() => beep(1320, .15), 100); }
-  else beep(220, .2, "sawtooth");
+  if (correct) {
+    score++; streak++;
+    beep(880, .15); setTimeout(() => beep(1320, .15), 100);
+    buzz(40);
+  } else {
+    streak = 0;
+    beep(220, .2, "sawtooth");
+    buzz([20, 40, 20]);
+  }
+  $("scorePill").textContent = score;
+  const st = $("streak");
+  if (streak >= 3) { st.textContent = `🔥 ${streak} in a row!`; st.classList.add("show"); } else st.classList.remove("show");
 
   const g = $("game");
   g.classList.add(correct ? "flash-go" : "flash-skip");
@@ -479,46 +1209,143 @@ function mark(correct) {
   fb.textContent = correct ? "GOT IT!" : "PASS";
   fb.style.display = "block";
 
-  gameActive = false;
   setTimeout(() => {
     g.classList.remove("flash-go", "flash-skip");
     fb.style.display = "none";
     $("word").style.display = "block";
-    if (timeLeft > 0) { nextWord(); gameActive = true; }
-  }, 550);
+    if (roundRunning && remainingMs > 0) { nextWord(); gameActive = true; }
+  }, 500);
 }
 
-$("zoneGo").onclick = () => mark(true);
-$("zoneSkip").onclick = () => mark(false);
+$("zoneGo").onclick = () => { if (paused) return resume(); mark(true); };
+$("zoneSkip").onclick = () => { if (paused) return resume(); mark(false); };
+$("pause").onclick = resume;
+$("quitBtn").onclick = e => { e.stopPropagation(); if (roundRunning) { roundRunning = false; gameActive = false; clearInterval(tickId); finishRound(); } };
+
 document.addEventListener("keydown", e => {
-  if (!$("game").classList.contains("active")) return;
-  if (e.key === "ArrowRight" || e.key === " ") mark(true);
+  if (!$("game").classList.contains("active")) {
+    if ($("timesup").classList.contains("active")) {
+      if (e.key === "ArrowRight" || e.key === " " || e.code === "Space") $("lastGot").click();
+      if (e.key === "ArrowLeft") $("lastMiss").click();
+    }
+    return;
+  }
+  if (paused) { resume(); return; }
+  if (e.key === "ArrowRight" || e.key === " " || e.code === "Space") { e.preventDefault(); mark(true); }
   if (e.key === "ArrowLeft") mark(false);
+  if (e.key === "Escape") $("quitBtn").click();
 });
 
-function endGame() {
-  clearInterval(timerId);
-  gameActive = false;
-  beep(523, .2); setTimeout(() => beep(659, .2), 180); setTimeout(() => beep(784, .35), 360);
-  $("finalScore").textContent = score;
-  $("scoreLabel").textContent = score === 1 ? "CORRECT!" : "CORRECT!";
-  const list = $("wordList");
-  list.innerHTML = "";
-  history.forEach(h => {
-    const d = document.createElement("div");
-    d.className = "word-item " + (h.got ? "got" : "miss");
-    d.innerHTML = `<span>${h.word}</span><span>${h.got ? "✓" : "✗"}</span>`;
-    list.appendChild(d);
-  });
-  show("results");
+/* pause when the tab/app goes to the background */
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden && roundRunning && !paused) {
+    paused = true;
+    remainingMs = Math.max(0, endAt - Date.now());
+    $("pause").classList.add("show");
+  } else if (!document.hidden && roundRunning) {
+    requestWakeLock();
+  }
+});
+function resume() {
+  if (!paused) return;
+  paused = false;
+  endAt = Date.now() + remainingMs;
+  $("pause").classList.remove("show");
 }
 
+function timeUp() {
+  clearInterval(tickId);
+  roundRunning = false;
+  releaseWakeLock();
+  beep(523, .2); setTimeout(() => beep(659, .2), 180); setTimeout(() => beep(784, .35), 360);
+  buzz([60, 40, 60]);
+  if (gameActive) {
+    // A word is still on screen: let them settle it.
+    gameActive = false;
+    $("lastWord").textContent = currentWord;
+    show("timesup");
+  } else {
+    finishRound();
+  }
+}
+$("lastGot").onclick = () => { history.push({ word: currentWord, got: true }); score++; finishRound(); };
+$("lastMiss").onclick = () => { history.push({ word: currentWord, got: false }); finishRound(); };
+
+function finishRound() {
+  releaseWakeLock();
+  gameActive = false; roundRunning = false;
+  if (settings.teams) teamScores[currentTeam] += score;
+  const k = bestKey();
+  const isBest = score > 0 && score > (best[k] || 0);
+  if (isBest) { best[k] = score; store.set("best", best); }
+  renderResults(isBest);
+  show("results");
+  $("results").scrollTop = 0;
+}
+
+function renderResults(isBest) {
+  $("finalScore").textContent = score;
+  $("scoreLabel").textContent = score === 1 ? "CORRECT" : "CORRECT";
+  $("bestBadge").classList.toggle("hidden", !isBest);
+  $("resultTeam").classList.toggle("hidden", !settings.teams);
+  $("resultTeam").textContent = settings.teams ? teamName(currentTeam) : "";
+  const sb = $("scoreboard");
+  sb.classList.toggle("hidden", !settings.teams);
+  if (settings.teams) {
+    const lead = teamScores[0] === teamScores[1] ? -1 : (teamScores[0] > teamScores[1] ? 0 : 1);
+    sb.innerHTML = [0, 1].map(i => `<div class="team${lead === i ? " lead" : ""}">${teamName(i)}<b>${teamScores[i]}</b></div>`).join("");
+  }
+  $("againBtn").textContent = settings.teams ? `NEXT: ${teamName(1 - currentTeam).toUpperCase()}` : "PLAY AGAIN";
+
+  const list = $("wordList");
+  list.innerHTML = history.length ? `<div class="hint">Tap a word to fix a mistake</div>` : `<div class="hint">No words this round</div>`;
+  history.forEach((h, i) => {
+    const d = document.createElement("div");
+    d.className = "word-item " + (h.got ? "got" : "miss");
+    d.innerHTML = `<span>${escapeHtml(h.word)}</span><span>${h.got ? "✓" : "✗"}</span>`;
+    d.onclick = () => {
+      h.got = !h.got;
+      score += h.got ? 1 : -1;
+      if (settings.teams) teamScores[currentTeam] += h.got ? 1 : -1;
+      beep(h.got ? 880 : 220, .1);
+      const k = bestKey();
+      if (score > (best[k] || 0)) { best[k] = score; store.set("best", best); }
+      renderResults(false);
+    };
+    list.appendChild(d);
+  });
+}
+
+$("shareBtn").onclick = async () => {
+  const d = deckInfo(selectedDeck);
+  const got = history.filter(h => h.got).map(h => h.word);
+  const text = `Heads Up! ${d.emoji} ${d.name}: ${score} correct in ${settings.seconds}s` +
+    (settings.teams ? ` (${teamName(currentTeam)})` : "") +
+    (got.length ? `\n✓ ${got.join(", ")}` : "");
+  try {
+    if (navigator.share) { await navigator.share({ text }); return; }
+    await navigator.clipboard.writeText(text);
+    toast("Copied to clipboard");
+  } catch(e) { if (e && e.name !== "AbortError") toast("Couldn't share"); }
+};
+
+function escapeHtml(s) { return s.replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])); }
 function shuffle(a) {
   for (let i = a.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+}
+
+/* =========================================================
+   INIT
+   ========================================================= */
+buildDecks();
+renderSettings();
+// Android / desktop: no permission prompt needed, so start listening right away
+if (settings.tilt && !(window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === "function")) {
+  Tilt.enable();
 }
 </script>
 </body>
