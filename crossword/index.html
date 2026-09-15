@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Crossword Solver — Heine Family Games</title>
+  <link rel="icon" type="image/svg+xml" href="../favicon.svg">
+  <link rel="icon" type="image/png" sizes="32x32" href="../favicon-32.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:       #0b0d13;
+      --bg-soft:  #10131c;
+      --panel:    #151926;
+      --line:     #232838;
+      --ink:      #eef1f8;
+      --muted:    #868da4;
+      --accent:   #b388ff;
+      --accent-lit: #d3bcff;
+      --cyan:     #33b5e5;
+      --amber:    #ffc24b;
+      --magenta:  #ff5d8f;
+      --cell-bg:  #f4f6fb;
+      --cell-ink: #0b0d13;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background:
+        radial-gradient(900px 500px at 50% -180px, rgba(179,136,255,0.12), transparent 60%),
+        var(--bg);
+      color: var(--ink);
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      line-height: 1.5;
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .wrap { width: min(760px, 100% - 2rem); margin: 0 auto; }
+
+    /* ============== HEADER ============== */
+    header { padding: 1.4rem 0 1rem; }
+    .back {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      font-family: 'Space Mono', monospace;
+      font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--muted); text-decoration: none; margin-bottom: 1.2rem;
+    }
+    .back:hover { color: var(--accent); }
+    .eyebrow {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.68rem; letter-spacing: 0.36em; text-transform: uppercase;
+      color: var(--accent); margin-bottom: 0.35rem;
+    }
+    h1 {
+      font-weight: 700; letter-spacing: -0.02em; line-height: 1.05;
+      font-size: clamp(1.9rem, 6vw, 2.6rem);
+    }
+    .sub { color: var(--muted); margin-top: 0.5rem; max-width: 52ch; }
+
+    /* ============== TOOLBAR ============== */
+    .toolbar {
+      display: flex; flex-wrap: wrap; gap: 0.5rem;
+      padding: 0.8rem 0 1rem;
+      position: sticky; top: 0; z-index: 5;
+      background: linear-gradient(var(--bg) 85%, transparent);
+    }
+    .btn {
+      font: 600 0.82rem/1 'Space Grotesk', sans-serif;
+      letter-spacing: 0.04em;
+      padding: 0.7rem 1rem;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--ink);
+      cursor: pointer;
+      transition: border-color 0.15s, transform 0.15s, background 0.15s;
+    }
+    .btn:hover { border-color: var(--accent); }
+    .btn:active { transform: translateY(1px); }
+    .btn.primary { background: var(--accent); color: #150a2e; border-color: var(--accent); }
+    .btn.primary:hover { background: var(--accent-lit); }
+    .btn.danger { color: var(--magenta); }
+    .btn.danger:hover { border-color: var(--magenta); }
+    .btn.small { padding: 0.55rem 0.85rem; }
+    .btn.ghost { background: transparent; }
+    .spacer { flex: 1; }
+
+    /* ============== CLUE CARD ============== */
+    #clues { display: flex; flex-direction: column; gap: 1rem; padding-bottom: 4rem; }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 1rem;
+      box-shadow: 0 20px 50px -30px rgba(0,0,0,0.9);
+    }
+    .card.done { border-color: rgba(179,136,255,0.55); }
+
+    .card-head { display: flex; gap: 0.5rem; align-items: stretch; }
+    .field {
+      background: var(--bg-soft);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      border-radius: 10px;
+      padding: 0.65rem 0.8rem;
+      font: inherit;
+      min-width: 0;
+    }
+    .field:focus { outline: 2px solid var(--accent); outline-offset: 0; border-color: transparent; }
+    .field::placeholder { color: #555c73; }
+    .label { width: 4.6rem; text-align: center; font-family: 'Space Mono', monospace; font-weight: 700; text-transform: uppercase; }
+    .clue { flex: 1; }
+    .icon {
+      width: 2.4rem; min-width: 2.4rem;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: var(--bg-soft);
+      color: var(--muted);
+      font: 700 1rem 'Space Mono', monospace;
+      cursor: pointer;
+    }
+    .icon:hover { color: var(--ink); border-color: var(--accent); }
+    .icon.del:hover { color: var(--magenta); border-color: var(--magenta); }
+
+    /* answer cells */
+    .answer {
+      display: flex; flex-wrap: wrap; gap: 0.7rem 1rem;
+      align-items: center; margin-top: 0.85rem;
+    }
+    .cells { display: flex; flex-wrap: wrap; gap: 4px; flex: 1; min-width: 0; }
+    .cell {
+      width: 2.35rem; height: 2.55rem;
+      text-align: center;
+      font: 700 1.2rem 'Space Mono', monospace;
+      background: var(--cell-bg);
+      color: var(--cell-ink);
+      border: 2px solid #05060a;
+      border-radius: 5px;
+      text-transform: uppercase;
+      caret-color: var(--accent);
+      padding: 0;
+      -webkit-appearance: none; appearance: none;
+    }
+    .cell:focus { outline: 3px solid var(--accent); outline-offset: -1px; }
+    .cell.blank { background: #dfe3ee; }
+    .anylen {
+      font-family: 'Space Mono', monospace; font-size: 0.72rem; letter-spacing: 0.16em;
+      text-transform: uppercase; color: var(--muted);
+      border: 1px dashed var(--line); border-radius: 8px; padding: 0.6rem 0.9rem;
+    }
+    .len {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      font-family: 'Space Mono', monospace; font-size: 0.72rem;
+      letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+    }
+    .len .lenval { min-width: 2.2rem; text-align: center; color: var(--ink); font-size: 0.95rem; font-weight: 700; }
+    .len .icon { width: 2rem; min-width: 2rem; height: 2rem; }
+
+    .card-actions {
+      display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+      margin-top: 0.85rem;
+    }
+    .status {
+      flex: 1; min-width: 12ch;
+      font-family: 'Space Mono', monospace; font-size: 0.72rem; letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+    .status.busy { color: var(--amber); }
+    .status.busy::after { content: ""; animation: dots 1.2s steps(4) infinite; }
+    @keyframes dots { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }
+    .status.err { color: var(--magenta); }
+    .status.ok { color: var(--accent); }
+    .link {
+      background: none; border: 0; color: var(--muted);
+      font: 500 0.8rem 'Space Grotesk', sans-serif; cursor: pointer;
+      text-decoration: underline dotted; padding: 0.4rem 0.2rem;
+    }
+    .link:hover { color: var(--ink); }
+
+    /* results */
+    .results { list-style: none; display: grid; gap: 6px; margin-top: 0.8rem; }
+    .results:empty { display: none; }
+    .hit button {
+      width: 100%; text-align: left;
+      background: var(--bg-soft); border: 1px solid var(--line); border-radius: 11px;
+      padding: 0.6rem 0.8rem; color: inherit; font: inherit; cursor: pointer;
+      display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 0.15rem 0.6rem;
+      transition: border-color 0.15s, transform 0.15s;
+    }
+    .hit button:hover, .hit button:focus-visible { border-color: var(--accent); transform: translateX(2px); outline: none; }
+    .letters { font: 700 1.05rem 'Space Mono', monospace; letter-spacing: 0.2em; word-break: break-all; }
+    .letters .k { color: var(--muted); }
+    .letters .n { color: var(--ink); }
+    .orig { font-size: 0.8rem; color: var(--muted); margin-left: 0.4rem; letter-spacing: 0; font-family: 'Space Grotesk', sans-serif; font-weight: 400; }
+    .tier {
+      font-family: 'Space Mono', monospace; font-size: 0.58rem; letter-spacing: 0.14em;
+      text-transform: uppercase; padding: 0.22rem 0.5rem; border-radius: 999px;
+      border: 1px solid var(--line); color: var(--muted); white-space: nowrap;
+    }
+    .tier.t1 { color: var(--accent); border-color: rgba(179,136,255,0.45); background: rgba(179,136,255,0.08); }
+    .tier.t2 { color: var(--cyan); border-color: rgba(51,181,229,0.4); background: rgba(51,181,229,0.07); }
+    .def { grid-column: 1 / -1; color: var(--muted); font-size: 0.84rem; line-height: 1.35; }
+    .more { margin-top: 0.4rem; }
+    .hidden { display: none !important; }
+
+    .foot {
+      font-family: 'Space Mono', monospace; font-size: 0.68rem; letter-spacing: 0.08em;
+      color: var(--muted); text-align: center; padding: 1rem 0 2.5rem;
+    }
+    .foot a { color: var(--muted); }
+
+    @media (max-width: 480px) {
+      .label { width: 3.9rem; padding-left: 0.3rem; padding-right: 0.3rem; }
+      .cell { width: 2.05rem; height: 2.3rem; font-size: 1.05rem; }
+    }
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+  </style>
+</head>
+<body>
+
+  <div class="wrap">
+    <header>
+      <a class="back" href="../">&#9664; Arcade</a>
+      <p class="eyebrow">Apps &amp; tools</p>
+      <h1>Crossword Solver</h1>
+      <p class="sub">Type the clue, fill in the letters you already have, and get a ranked list of answers that fit the gaps.</p>
+    </header>
+
+    <div class="toolbar">
+      <button id="add" class="btn primary">+ Add clue</button>
+      <button id="solveAll" class="btn">Solve all</button>
+      <span class="spacer"></span>
+      <button id="clearAll" class="btn danger ghost">Clear all</button>
+    </div>
+
+    <div id="clues"></div>
+
+    <p class="foot">Answers and definitions come from the <a href="https://www.datamuse.com/api/" target="_blank" rel="noopener">Datamuse</a> word service. Your clues stay saved in this browser.</p>
+  </div>
+
+  <template id="cardT">
+    <article class="card">
+      <div class="card-head">
+        <input class="field label" placeholder="12A" maxlength="6" aria-label="Clue number" autocomplete="off">
+        <input class="field clue" placeholder="Clue, e.g. Feline pet" aria-label="Clue text" autocomplete="off" enterkeyhint="search">
+        <button class="icon del" title="Remove clue" aria-label="Remove clue">&#10005;</button>
+      </div>
+      <div class="answer">
+        <div class="cells" role="group" aria-label="Answer letters"></div>
+        <div class="len">
+          <button class="icon minus" aria-label="One letter fewer">&minus;</button>
+          <span class="lenval">5</span>
+          <button class="icon plus" aria-label="One more letter">+</button>
+        </div>
+      </div>
+      <div class="card-actions">
+        <span class="status" aria-live="polite"></span>
+        <button class="link erase">Clear letters</button>
+        <button class="btn small solve">Solve</button>
+      </div>
+      <ol class="results"></ol>
+      <button class="link more hidden">Show more</button>
+    </article>
+  </template>
+
+  <script>
+    const STORE   = 'hfg.crossword.v1';
+    const API     = 'https://api.datamuse.com/words';
+    const MAXLEN  = 25;
+    const PAGE    = 25;
+    const TIER_LABEL = { 1: 'clue + letters', 2: 'clue', 3: 'letters only' };
+
+    const state = { clues: [] };
+    const controllers = new Map();   // id -> controller
+
+    // ---------- persistence ----------
+    function load() {
+      try {
+        const raw = JSON.parse(localStorage.getItem(STORE) || '{}');
+        if (Array.isArray(raw.clues)) {
+          state.clues = raw.clues
+            .filter(c => c && typeof c.id === 'string' && Array.isArray(c.cells))
+            .map(c => ({
+              id: c.id,
+              label: String(c.label || '').slice(0, 6),
+              clue: String(c.clue || ''),
+              cells: c.cells.slice(0, MAXLEN).map(x => /^[A-Z]$/.test(x) ? x : '')
+            }));
+        }
+      } catch (e) { state.clues = []; }
+      if (!state.clues.length) state.clues.push(newClue());
+    }
+    function save() {
+      try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {}
+    }
+    function newClue() {
+      return { id: 'c' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6), label: '', clue: '', cells: Array(5).fill('') };
+    }
+
+    // ---------- word helpers ----------
+    function normalize(word) {
+      return String(word).normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z]/g, '');
+    }
+    function fits(norm, cells) {
+      if (!cells.length) return true;
+      if (norm.length !== cells.length) return false;
+      for (let i = 0; i < cells.length; i++) if (cells[i] && cells[i] !== norm[i]) return false;
+      return true;
+    }
+    function firstDef(defs) {
+      if (!Array.isArray(defs) || !defs.length) return '';
+      const d = defs[0].replace(/^[a-z]+\t/, '').trim();
+      return d.length > 110 ? d.slice(0, 107).replace(/\s+\S*$/, '') + '…' : d;
+    }
+    async function fetchWords(params) {
+      const u = new URL(API);
+      for (const k in params) u.searchParams.set(k, params[k]);
+      const r = await fetch(u.toString());
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }
+
+    // ---------- card controller ----------
+    const tpl = document.getElementById('cardT');
+    const cluesEl = document.getElementById('clues');
+
+    function mountCard(c, opts = {}) {
+      const el = tpl.content.firstElementChild.cloneNode(true);
+      el.dataset.id = c.id;
+      const q = s => el.querySelector(s);
+      const labelI = q('.label'), clueI = q('.clue'), cellsEl = q('.cells'), lenVal = q('.lenval');
+      const statusEl = q('.status'), resultsEl = q('.results'), moreB = q('.more');
+
+      let hits = [], shown = 0, reqId = 0, timer = null, cellInputs = [];
+
+      labelI.value = c.label;
+      clueI.value = c.clue;
+
+      const setStatus = (msg, cls = '') => { statusEl.textContent = msg; statusEl.className = 'status ' + cls; };
+      const schedule = () => { clearTimeout(timer); timer = setTimeout(solve, 650); };
+
+      // --- cells ---
+      function renderCells(focusIdx = -1) {
+        cellsEl.innerHTML = '';
+        cellInputs = [];
+        lenVal.textContent = c.cells.length || 'any';
+        if (!c.cells.length) {
+          const s = document.createElement('span');
+          s.className = 'anylen';
+          s.textContent = 'Any length';
+          cellsEl.appendChild(s);
+          return;
+        }
+        c.cells.forEach((ch, i) => {
+          const inp = document.createElement('input');
+          inp.className = 'cell' + (ch ? '' : ' blank');
+          inp.type = 'text';
+          inp.value = ch;
+          inp.setAttribute('aria-label', 'Letter ' + (i + 1));
+          inp.autocomplete = 'off'; inp.autocapitalize = 'characters'; inp.spellcheck = false;
+          inp.addEventListener('focus', () => inp.select());
+          inp.addEventListener('input', () => {
+            // Runs for every keyboard, including mobile ones that report no key name.
+            const raw = inp.value;
+            const v = raw.replace(/[^a-zA-Z]/g, '').slice(-1).toUpperCase();
+            setCell(i, v);
+            if (v || /[ ?._\-*]/.test(raw)) moveTo(i + 1);   // a blank marker skips the cell
+            schedule();
+          });
+          inp.addEventListener('beforeinput', e => {
+            if (e.inputType === 'deleteContentBackward' && !inp.value && i > 0) {
+              e.preventDefault(); setCell(i - 1, ''); moveTo(i - 1); schedule();
+            }
+          });
+          inp.addEventListener('keydown', e => {
+            if (e.key === 'Backspace' && !inp.value && i > 0) { e.preventDefault(); setCell(i - 1, ''); moveTo(i - 1); schedule(); }
+            else if (e.key === 'ArrowLeft') { e.preventDefault(); moveTo(i - 1); }
+            else if (e.key === 'ArrowRight') { e.preventDefault(); moveTo(i + 1); }
+            else if (e.key === 'Enter') { e.preventDefault(); solve(); }
+          });
+          inp.addEventListener('paste', e => {
+            e.preventDefault();
+            const text = (e.clipboardData || window.clipboardData).getData('text') || '';
+            let j = i;
+            for (const raw of text.toUpperCase()) {
+              if (j >= c.cells.length) break;
+              if (/[A-Z]/.test(raw)) setCell(j++, raw);
+              else if (/[?._\-* ]/.test(raw)) setCell(j++, '');
+            }
+            moveTo(Math.min(j, c.cells.length - 1));
+            schedule();
+          });
+          cellsEl.appendChild(inp);
+          cellInputs.push(inp);
+        });
+        if (focusIdx >= 0 && cellInputs[focusIdx]) cellInputs[focusIdx].focus();
+      }
+      function setCell(i, v) {
+        c.cells[i] = v;
+        const inp = cellInputs[i];
+        if (inp) { inp.value = v; inp.classList.toggle('blank', !v); }
+        el.classList.remove('done');
+        save();
+      }
+      function moveTo(i) {
+        const inp = cellInputs[i];
+        if (inp) { inp.focus(); inp.select(); }
+      }
+      function setLength(n) {
+        n = Math.max(0, Math.min(MAXLEN, n));
+        while (c.cells.length < n) c.cells.push('');
+        c.cells.length = n;
+        el.classList.remove('done');
+        save();
+        renderCells();
+        schedule();
+      }
+
+      // --- solving ---
+      async function solve() {
+        clearTimeout(timer);
+        const clue = c.clue.trim();
+        const len = c.cells.length;
+        const known = c.cells.some(Boolean);
+        const pat = c.cells.map(x => x || '?').join('');
+
+        if (!clue && !known) {
+          hits = []; renderResults();
+          setStatus('Add a clue or some letters to search.');
+          return;
+        }
+        const my = ++reqId;
+        setStatus('Searching', 'busy');
+
+        const qs = [];
+        if (clue && len)                       qs.push({ tier: 1, p: { sp: pat, ml: clue, md: 'd', max: 80 } });
+        if (clue && len && !/\s/.test(clue))   qs.push({ tier: 1, p: { sp: pat, rel_syn: clue, md: 'd', max: 40 } });
+        if (clue)                              qs.push({ tier: 2, p: { ml: clue, md: 'd', max: 400 } });
+        if (len && known)                      qs.push({ tier: 3, p: { sp: pat, md: 'd', max: 150 } });
+
+        const settled = await Promise.allSettled(qs.map(x => fetchWords(x.p).then(rows => ({ tier: x.tier, rows }))));
+        if (my !== reqId) return;
+
+        const seen = new Map();
+        let order = 0, failed = 0;
+        for (const s of settled) {
+          if (s.status !== 'fulfilled') { failed++; continue; }
+          for (const row of s.value.rows) {
+            const norm = normalize(row.word);
+            if (!norm || !fits(norm, c.cells)) continue;
+            const prev = seen.get(norm);
+            if (!prev) seen.set(norm, { word: row.word, norm, tier: s.value.tier, def: firstDef(row.defs), order: order++ });
+            else {
+              if (s.value.tier < prev.tier) { prev.tier = s.value.tier; prev.order = order++; }
+              if (!prev.def) prev.def = firstDef(row.defs);
+            }
+          }
+        }
+        hits = [...seen.values()].sort((a, b) => a.tier - b.tier || a.order - b.order);
+        shown = 0;
+        renderResults();
+
+        if (failed === settled.length) setStatus('Could not reach the word service. Check your connection.', 'err');
+        else if (!hits.length) setStatus('Nothing fits. Try fewer letters, a different length, or reword the clue.');
+        else setStatus(hits.length + (hits.length === 1 ? ' answer fits' : ' answers fit') + (failed ? ' (partial results)' : ''), 'ok');
+      }
+
+      function renderResults() {
+        resultsEl.innerHTML = '';
+        shown = Math.min(hits.length, shown + PAGE);
+        for (let i = 0; i < shown; i++) resultsEl.appendChild(hitEl(hits[i]));
+        moreB.classList.toggle('hidden', shown >= hits.length);
+        moreB.textContent = 'Show ' + Math.min(PAGE, hits.length - shown) + ' more';
+      }
+      function hitEl(h) {
+        const li = document.createElement('li');
+        li.className = 'hit';
+        const b = document.createElement('button');
+        b.type = 'button';
+        b.title = 'Fill this answer in';
+        const letters = document.createElement('span');
+        letters.className = 'letters';
+        for (let i = 0; i < h.norm.length; i++) {
+          const s = document.createElement('span');
+          s.className = c.cells[i] ? 'k' : 'n';
+          s.textContent = h.norm[i];
+          letters.appendChild(s);
+        }
+        if (normalize(h.word) !== h.word.toUpperCase()) {
+          const o = document.createElement('span');
+          o.className = 'orig';
+          o.textContent = h.word;
+          letters.appendChild(o);
+        }
+        const tier = document.createElement('span');
+        tier.className = 'tier t' + h.tier;
+        tier.textContent = TIER_LABEL[h.tier];
+        b.appendChild(letters);
+        b.appendChild(tier);
+        if (h.def) {
+          const d = document.createElement('span');
+          d.className = 'def';
+          d.textContent = h.def;
+          b.appendChild(d);
+        }
+        b.addEventListener('click', () => fill(h));
+        li.appendChild(b);
+        return li;
+      }
+      function fill(h) {
+        c.cells = h.norm.split('');
+        save();
+        renderCells();
+        el.classList.add('done');
+        setStatus('Filled in ' + h.norm, 'ok');
+        el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+
+      // --- wiring ---
+      labelI.addEventListener('input', () => { c.label = labelI.value.toUpperCase(); save(); });
+      clueI.addEventListener('input', () => { c.clue = clueI.value; el.classList.remove('done'); save(); schedule(); });
+      clueI.addEventListener('keydown', e => { if (e.key === 'Enter') { e.preventDefault(); solve(); } });
+      q('.minus').addEventListener('click', () => setLength(c.cells.length - 1));
+      q('.plus').addEventListener('click', () => setLength(c.cells.length + 1));
+      q('.solve').addEventListener('click', solve);
+      q('.erase').addEventListener('click', () => { c.cells = c.cells.map(() => ''); save(); renderCells(0); schedule(); });
+      moreB.addEventListener('click', renderResults);
+      q('.del').addEventListener('click', () => removeClue(c.id));
+
+      renderCells();
+      cluesEl.appendChild(el);
+      controllers.set(c.id, { el, solve });
+      if (opts.focus) { clueI.focus(); el.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+      if (c.clue.trim() || c.cells.some(Boolean)) schedule();
+      return el;
+    }
+
+    // ---------- list management ----------
+    function addClue(focus = true) {
+      const c = newClue();
+      state.clues.push(c);
+      save();
+      mountCard(c, { focus });
+    }
+    function removeClue(id) {
+      const ctl = controllers.get(id);
+      if (ctl) { ctl.el.remove(); controllers.delete(id); }
+      state.clues = state.clues.filter(c => c.id !== id);
+      save();
+      if (!state.clues.length) addClue(false);
+    }
+
+    document.getElementById('add').addEventListener('click', () => addClue(true));
+    document.getElementById('solveAll').addEventListener('click', () => controllers.forEach(ctl => ctl.solve()));
+    document.getElementById('clearAll').addEventListener('click', () => {
+      if (!confirm('Remove every clue and start fresh?')) return;
+      controllers.forEach(ctl => ctl.el.remove());
+      controllers.clear();
+      state.clues = [];
+      save();
+      addClue(true);
+    });
+
+    load();
+    state.clues.forEach(c => mountCard(c));
+  </script>
+</body>
+</html>
