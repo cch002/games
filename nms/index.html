@@ -14,6 +14,8 @@
        background-image:radial-gradient(circle at 20% 0%,#1a2650 0,transparent 45%),radial-gradient(circle at 90% 100%,#2b1a3a 0,transparent 40%)}
   header{padding:18px 16px 10px;border-bottom:1px solid var(--line)}
   h1{margin:0;font-size:13px;letter-spacing:.32em;text-transform:uppercase;color:var(--amber);font-weight:600}
+  .back{display:inline-block;margin-bottom:8px;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);text-decoration:none}
+  .back:hover{color:var(--teal)}
   h1 small{display:block;color:var(--dim);letter-spacing:.12em;font-size:11px;margin-top:4px}
   .tabs{display:flex;gap:6px;padding:10px 16px 0}
   .tab{flex:1;background:none;border:1px solid var(--line);color:var(--dim);padding:9px;font:inherit;font-size:12px;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%)}
@@ -66,6 +68,7 @@
 </head>
 <body>
 <header>
+  <a class="back" href="../">&#9664; Arcade</a>
   <h1>Traveller's Catalogue<small>No Man's Sky · encyclopedia & inventory</small></h1>
 </header>
 <nav class="tabs">

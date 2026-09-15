@@ -28,6 +28,11 @@
     font-family:'IM Fell English SC',Georgia,serif; font-size:30px; letter-spacing:.04em;
     margin:0; text-shadow:0 2px 0 rgba(0,0,0,.5);
   }
+  .back {
+    display:inline-block; margin-bottom:6px; font-family:'Barlow Semi Condensed',sans-serif; font-size:11px;
+    letter-spacing:.22em; text-transform:uppercase; color:var(--brass); opacity:.8; text-decoration:none;
+  }
+  .back:hover { opacity:1; }
   .rule { display:flex; align-items:center; gap:10px; margin-top:8px; }
   .rule span { height:1px; flex:1; background:linear-gradient(90deg,transparent,var(--brass),transparent); opacity:.55; }
   .rule b {
@@ -142,6 +147,7 @@
 </head>
 <body>
 <header class="top">
+  <a class="back" href="../">&#9664; Arcade</a>
   <h1 id="title">Skull King</h1>
   <div class="rule"><span></span><b id="subtitle">Muster the crew</b><span></span></div>
 </header>
