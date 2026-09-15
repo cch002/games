@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Traveller's Catalogue — No Man's Sky</title>
+<style>
+  :root{
+    --void:#0b0f1c; --panel:#141a2c; --panel2:#1b2238; --line:#2a3452;
+    --ink:#e9edf7; --dim:#8a94b3; --amber:#ffb03b; --teal:#4fd8e0; --rose:#ff5e6c; --lime:#9be15d;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--void);color:var(--ink);font:15px/1.5 "Segoe UI",system-ui,-apple-system,sans-serif;
+       background-image:radial-gradient(circle at 20% 0%,#1a2650 0,transparent 45%),radial-gradient(circle at 90% 100%,#2b1a3a 0,transparent 40%)}
+  header{padding:18px 16px 10px;border-bottom:1px solid var(--line)}
+  h1{margin:0;font-size:13px;letter-spacing:.32em;text-transform:uppercase;color:var(--amber);font-weight:600}
+  h1 small{display:block;color:var(--dim);letter-spacing:.12em;font-size:11px;margin-top:4px}
+  .tabs{display:flex;gap:6px;padding:10px 16px 0}
+  .tab{flex:1;background:none;border:1px solid var(--line);color:var(--dim);padding:9px;font:inherit;font-size:12px;letter-spacing:.18em;text-transform:uppercase;cursor:pointer;clip-path:polygon(8px 0,100% 0,calc(100% - 8px) 100%,0 100%)}
+  .tab.on{background:var(--amber);color:#1a1200;border-color:var(--amber);font-weight:700}
+  main{padding:14px 16px 90px;max-width:960px;margin:0 auto}
+  .view{display:none}.view.on{display:block}
+  input,select,textarea{width:100%;background:var(--panel);border:1px solid var(--line);color:var(--ink);padding:10px 12px;font:inherit;border-radius:3px}
+  input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--teal);outline-offset:1px}
+  .row{display:flex;gap:8px;margin-bottom:10px}
+  .chips{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+  .chip{background:var(--panel);border:1px solid var(--line);color:var(--dim);padding:4px 10px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;border-radius:2px}
+  .chip.on{border-color:var(--teal);color:var(--teal)}
+  .list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+  .card{background:var(--panel);border:1px solid var(--line);padding:10px 12px;cursor:pointer;position:relative;overflow:hidden;min-height:78px}
+  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c,var(--dim))}
+  .card:hover{background:var(--panel2)}
+  .card .sym{font-size:11px;letter-spacing:.2em;color:var(--c,var(--dim));text-transform:uppercase}
+  .card .nm{font-weight:600;line-height:1.25;margin-top:2px}
+  .card .qty{position:absolute;right:10px;bottom:8px;font-size:12px;color:var(--amber);font-variant-numeric:tabular-nums}
+  .detail{background:var(--panel);border:1px solid var(--line);padding:16px;margin-top:14px}
+  .detail h2{margin:0;font-size:22px;letter-spacing:.02em}
+  .eyebrow{font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--dim)}
+  .eyebrow.k{color:var(--teal);margin-top:16px;margin-bottom:4px}
+  .detail p{margin:6px 0}
+  ul.plain{margin:4px 0;padding-left:0;list-style:none}
+  ul.plain li{padding:6px 0;border-bottom:1px dashed var(--line)}
+  ul.plain li:last-child{border:0}
+  .link{color:var(--teal);cursor:pointer;text-decoration:underline dotted}
+  .ok{color:var(--lime)}.no{color:var(--rose)}
+  .meta{display:grid;grid-template-columns:1fr 1fr;gap:8px 16px;margin-top:10px;font-size:14px}
+  .meta b{display:block;font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);font-weight:500}
+  .stepper{display:flex;align-items:center;gap:6px;margin-top:14px}
+  .stepper input{width:110px;text-align:center;font-size:18px}
+  button.b{background:var(--panel2);border:1px solid var(--line);color:var(--ink);padding:10px 14px;font:inherit;cursor:pointer;border-radius:3px}
+  button.b.primary{background:var(--amber);color:#1a1200;border-color:var(--amber);font-weight:700}
+  button.b.danger{border-color:var(--rose);color:var(--rose)}
+  .slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+  .slot{aspect-ratio:1;background:var(--panel);border:1px solid var(--line);clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:14px 8px;cursor:pointer}
+  .slot .sym{font-size:16px;font-weight:700;color:var(--c,var(--dim))}
+  .slot .nm{font-size:10px;line-height:1.2;color:var(--dim);margin-top:2px}
+  .slot .q{font-size:15px;font-variant-numeric:tabular-nums;margin-top:3px}
+  .empty{color:var(--dim);border:1px dashed var(--line);padding:24px;text-align:center}
+  .craft{background:var(--panel);border:1px solid var(--line);padding:10px 12px;margin-bottom:8px}
+  .craft .nm{font-weight:600}
+  .note{font-size:12px;color:var(--dim);margin-top:14px}
+  label.f{display:block;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);margin:10px 0 4px}
+  .toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%);background:var(--amber);color:#1a1200;padding:10px 18px;border-radius:3px;font-weight:600;display:none;z-index:9}
+  @media (prefers-reduced-motion:no-preference){.card,.slot{transition:background .15s}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Traveller's Catalogue<small>No Man's Sky · encyclopedia & inventory</small></h1>
+</header>
+<nav class="tabs">
+  <button class="tab on" data-v="enc">Catalogue</button>
+  <button class="tab" data-v="inv">Inventory</button>
+  <button class="tab" data-v="craft">Craftable</button>
+  <button class="tab" data-v="add">Add item</button>
+</nav>
+
+<main>
+<!-- ENCYCLOPEDIA -->
+<section class="view on" id="v-enc">
+  <div class="row"><input id="q" placeholder="Search an item — e.g. Chromatic Metal, Warp Cell, Sodium…" autocomplete="off"></div>
+  <div class="chips" id="cats"></div>
+  <div class="list" id="list"></div>
+  <div id="detail"></div>
+</section>
+
+<!-- INVENTORY -->
+<section class="view" id="v-inv">
+  <div class="row">
+    <select id="invPick"></select>
+    <input id="invQty" type="number" min="0" value="1" style="width:90px">
+    <button class="b primary" id="invAdd">Add</button>
+  </div>
+  <div class="slots" id="slots"></div>
+  <div class="row" style="margin-top:14px">
+    <button class="b" id="exportBtn">Export JSON</button>
+    <button class="b" id="importBtn">Import JSON</button>
+    <button class="b danger" id="clearBtn">Clear all</button>
+  </div>
+  <input type="file" id="importFile" accept="application/json" hidden>
+  <p class="note">Inventory lives in this page while it's open. Use Export to save a file and Import to bring it back later.</p>
+</section>
+
+<!-- CRAFTABLE -->
+<section class="view" id="v-craft">
+  <p class="eyebrow" style="margin-bottom:10px">What you can build right now with what you're carrying</p>
+  <div id="craftList"></div>
+</section>
+
+<!-- ADD -->
+<section class="view" id="v-add">
+  <p class="eyebrow">Add your own item or correct one</p>
+  <label class="f">Name</label><input id="aName">
+  <label class="f">Symbol (1–3 letters)</label><input id="aSym" maxlength="3">
+  <label class="f">Category</label>
+  <select id="aCat"></select>
+  <label class="f">Description</label><textarea id="aDesc" rows="3"></textarea>
+  <label class="f">Where to find</label><textarea id="aSrc" rows="2"></textarea>
+  <label class="f">Uses (one per line)</label><textarea id="aUses" rows="3"></textarea>
+  <label class="f">Recipe — one ingredient per line as "Name x Amount"</label><textarea id="aRec" rows="3" placeholder="Chromatic Metal x 25&#10;Condensed Carbon x 20"></textarea>
+  <label class="f">Refiner input (optional, e.g. "Carbon 2:1")</label><input id="aRef">
+  <div class="row" style="margin-top:14px"><button class="b primary" id="aSave">Save item</button></div>
+  <p class="note">Saving an item with an existing name replaces it. Export from the Inventory tab also saves your custom items.</p>
+</section>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+// ---------- DATA ----------
+// Values reflect common in-game numbers; recipes change between updates, so edit anything that's off.
+const CAT = {
+  raw:"Raw material", ore:"Metal", gas:"Gas", plant:"Harvested", crafted:"Crafted product",
+  tech:"Tech component", trade:"Trade & currency", fuel:"Fuel"
+};
+const COLOR = {raw:"#9be15d",ore:"#ffb03b",gas:"#4fd8e0",plant:"#c48bff",crafted:"#ff8f5e",tech:"#ff5e6c",trade:"#f4e27a",fuel:"#7cb3ff"};
+
+const BASE = [
+ {n:"Carbon",s:"C",c:"raw",d:"The most common organic element. Mined from plants, trees and rocks on nearly every planet.",src:"Mine any plant or tree with the Mining Beam.",u:["Recharges Mining Beam, Life Support (partially) and Multi-Tool tech","Fuel for base Biofuel Reactor","Ingredient in Carbon Nanotubes"],ref:"Refine 2 Condensed Carbon → 1? No: Carbon refines 2:1 into Condensed Carbon"},
+ {n:"Condensed Carbon",s:"C+",c:"raw",d:"A dense, purified form of carbon.",src:"Refine Carbon 2:1, or mine crystal deposits.",u:["Ingredient in Hermetic Seal","Ingredient in Antimatter","Recharges Mining Beam and Multi-Tool tech more efficiently"],ref:"Carbon 2:1"},
+ {n:"Oxygen",s:"O2",c:"gas",d:"Breathable gas found in red-glowing plants.",src:"Harvest red Oxygen plants; Oxygen Harvester; Gas Extractor.",u:["Recharges Life Support","Refiner ingredient that doubles many outputs (e.g. Carbon + Oxygen → Condensed Carbon)","Ingredient in Ion Battery variants and Life Support Gel"]},
+ {n:"Ferrite Dust",s:"Fe",c:"ore",d:"Basic metal dust from surface rocks.",src:"Mine any rock or boulder.",u:["Ingredient in Metal Plating","Ingredient in Ion Battery","Ingredient in Antimatter Housing","Repairs damaged tech"],ref:"Rusted Metal 1:1"},
+ {n:"Pure Ferrite",s:"Fe+",c:"ore",d:"Refined ferrite, used in early building.",src:"Refine Ferrite Dust 1:1.",u:["Base building parts","Repairs Multi-Tool and starship components","Ingredient in Magnetised Ferrite"],ref:"Ferrite Dust 1:1"},
+ {n:"Magnetised Ferrite",s:"Fe++",c:"ore",d:"Highly processed metal used in advanced structures.",src:"Refine Pure Ferrite 2:1; mine Ferrite crystal deposits.",u:["Advanced base building parts","Crafting starship and Exocraft technology","Repairs corrupted technology"],ref:"Pure Ferrite 2:1"},
+ {n:"Sodium",s:"Na",c:"raw",d:"Yellow crystals found in glowing plants.",src:"Harvest yellow Sodium plants.",u:["Recharges Hazard Protection","Ingredient in Sodium Nitrate","Ingredient in Ion Battery variants"]},
+ {n:"Sodium Nitrate",s:"Na+",c:"raw",d:"Concentrated sodium salt.",src:"Refine Sodium 2:1; mine Sodium crystal deposits.",u:["Recharges Hazard Protection very efficiently","Ingredient in several tech upgrades"],ref:"Sodium 2:1"},
+ {n:"Cobalt",s:"Co",c:"ore",d:"Bright blue mineral found in caves.",src:"Mine stalactites and cave rocks.",u:["Ingredient in Ion Battery","Recharges Terrain Manipulator","Base building (Cobalt-based parts)"]},
+ {n:"Ionised Cobalt",s:"Co+",c:"ore",d:"Purified cobalt.",src:"Refine Cobalt 2:1.",u:["Recharges Terrain Manipulator","Ingredient in Hazard Protection upgrades","Repairs damaged equipment"],ref:"Cobalt 2:1"},
+ {n:"Copper",s:"Cu",c:"ore",d:"Stellar metal from yellow-star systems.",src:"Mine Copper deposits (yellow systems), Mineral Extractor.",u:["Refines into Chromatic Metal","Repairs starship components"]},
+ {n:"Cadmium",s:"Cd",c:"ore",d:"Stellar metal from red-star systems. Needs a Cadmium Drive to reach.",src:"Mine Cadmium deposits in red systems.",u:["Refines into Chromatic Metal at a better ratio","Ingredient in Emeril Drive"]},
+ {n:"Emeril",s:"Em",c:"ore",d:"Stellar metal from green-star systems.",src:"Mine Emeril deposits in green systems.",u:["Refines into Chromatic Metal at a better ratio","Ingredient in Indium Drive"]},
+ {n:"Indium",s:"In",c:"ore",d:"Stellar metal from blue-star systems.",src:"Mine Indium deposits in blue systems.",u:["Refines into Chromatic Metal at the best ratio","Sells for high value"]},
+ {n:"Chromatic Metal",s:"Cr",c:"ore",d:"Universal processed metal. One of the most important materials in the game.",src:"Refine Copper (2:1), Cadmium (1:1), Emeril or Indium (higher yield). Buy from Galactic Trade Terminals.",u:["Ingredient in Antimatter","Ingredient in Microprocessor","Required for nearly every base-building tech and blueprint","Repairs starship technology"],ref:"Copper 2:1 · Cadmium 1:1 · Emeril 1:2 · Indium 1:4"},
+ {n:"Di-hydrogen",s:"H",c:"raw",d:"Blue crystals found on the surface of most planets.",src:"Mine blue Di-hydrogen crystals.",u:["Ingredient in Starship Launch Fuel","Ingredient in Di-hydrogen Jelly","Recharges Mining Beam and Life Support"]},
+ {n:"Di-hydrogen Jelly",s:"H+",c:"crafted",d:"Solidified hydrogen.",src:"Craft from Di-hydrogen.",u:["Refills Starship Launch Thruster and Hyperdrive tech","Refines back into 50 Di-hydrogen"],rec:[["Di-hydrogen",40]]},
+ {n:"Tritium",s:"H3",c:"fuel",d:"Fuel mined from asteroids.",src:"Shoot asteroids in space.",u:["Recharges Pulse Engine","Ingredient in Ion Battery variants","Refines into Di-hydrogen"]},
+ {n:"Uranium",s:"U",c:"raw",d:"Radioactive element found on irradiated planets.",src:"Mine deposits on radioactive planets; Mineral Extractor.",u:["Fuel for Launch Thruster and Pulse Engine","Ingredient in some upgrades"]},
+ {n:"Phosphorus",s:"P",c:"raw",d:"Found on scorched planets.",src:"Mine deposits on hot planets.",u:["Recharges Hazard Protection","Ingredient in Living Glass alternatives and upgrades"]},
+ {n:"Dioxite",s:"CO2",c:"raw",d:"Found on frozen planets.",src:"Mine deposits on cold planets.",u:["Recharges Hazard Protection","Refines into Oxygen"]},
+ {n:"Paraffinium",s:"Pf",c:"raw",d:"Found on lush planets.",src:"Mine deposits on lush planets.",u:["Base building","Refines into Oxygen"]},
+ {n:"Pyrite",s:"Py",c:"raw",d:"Found on desert planets.",src:"Mine deposits on arid planets.",u:["Recharges Launch Thruster","Refines into Oxygen"]},
+ {n:"Ammonia",s:"NH3",c:"raw",d:"Found on toxic planets.",src:"Mine deposits on toxic planets.",u:["Recharges Hazard Protection","Refines into Oxygen"]},
+ {n:"Silver",s:"Ag",c:"ore",d:"Asteroid metal.",src:"Shoot asteroids in space.",u:["Refines into Gold or Platinum","Repairs tech","Sells well"]},
+ {n:"Gold",s:"Au",c:"ore",d:"Valuable asteroid metal.",src:"Shoot asteroids; some planet deposits.",u:["Refines into Platinum","High sell value","Some blueprints"]},
+ {n:"Platinum",s:"Pt",c:"ore",d:"Very valuable processed metal.",src:"Refine Silver + Gold; rarely found raw.",u:["Sells for a high price","Ingredient in some rare technology"]},
+ {n:"Salt",s:"NaCl",c:"raw",d:"Found underwater and on shorelines.",src:"Mine underwater mineral formations.",u:["Recharges Aeration Membrane (underwater breathing)","Refines into Chlorine"]},
+ {n:"Chlorine",s:"Cl",c:"raw",d:"Refined from salt.",src:"Refine Salt 2:1.",u:["Refines back into Salt at a profit loop (Chlorine + Oxygen)","Sells for a good price"],ref:"Salt 2:1"},
+ {n:"Silicate Powder",s:"Si",c:"raw",d:"Fine mineral powder.",src:"Use the Terrain Manipulator on ground.",u:["Ingredient in Glass","Refines into Ferrite Dust"]},
+ {n:"Rusted Metal",s:"Rm",c:"raw",d:"Corroded scrap.",src:"Terrain Manipulator on derelict sites; abandoned buildings.",u:["Refines into Ferrite Dust"]},
+ {n:"Cactus Flesh",s:"Cf",c:"plant",d:"Harvested from cactus plants on desert planets.",src:"Harvest cactus; grow Echinocactus in Hydroponic Trays.",u:["Ingredient in Poly Fibre","Ingredient in Unstable Gel"]},
+ {n:"Frost Crystal",s:"Fc",c:"plant",d:"Harvested from Frostwort on frozen planets.",src:"Harvest Frostwort; grow in Hydroponic Trays.",u:["Ingredient in Heat Capacitor","Ingredient in Glass"]},
+ {n:"Gamma Root",s:"Gr",c:"plant",d:"Harvested on radioactive planets.",src:"Harvest Gamma Weed; grow in Hydroponic Trays.",u:["Ingredient in Lubricant"]},
+ {n:"Fungal Mould",s:"Fm",c:"plant",d:"Harvested on toxic planets.",src:"Harvest Fungal Cluster; grow in Hydroponic Trays.",u:["Ingredient in Acid"]},
+ {n:"Solanium",s:"So",c:"plant",d:"Harvested on scorched planets.",src:"Harvest Solar Vine; grow in Hydroponic Trays.",u:["Ingredient in Heat Capacitor"]},
+ {n:"Star Bulb",s:"Sb",c:"plant",d:"Harvested on lush planets.",src:"Harvest Star Bramble; grow in Hydroponic Trays.",u:["Ingredient in Poly Fibre"]},
+ {n:"Faecium",s:"Fa",c:"plant",d:"Creature by-product.",src:"Feed creatures; Faecium plants in trays.",u:["Ingredient in Lubricant"]},
+ {n:"Mordite",s:"Mo",c:"plant",d:"Dropped by killed creatures.",src:"Kill creatures; Mordite Root.",u:["Ingredient in Acid","Bait ingredients"]},
+ {n:"Carbon Nanotubes",s:"CNT",c:"crafted",d:"Lightweight carbon structure.",src:"Craft from Carbon.",u:["Ingredient in Microprocessor","Repairs damaged tech","Sell for units"],rec:[["Carbon",50]]},
+ {n:"Metal Plating",s:"MP",c:"crafted",d:"Basic structural plating.",src:"Craft from Ferrite Dust.",u:["Ingredient in Starship Launch Fuel","Repairs damaged tech"],rec:[["Ferrite Dust",50]]},
+ {n:"Hermetic Seal",s:"HS",c:"crafted",d:"Airtight seal.",src:"Craft from Condensed Carbon.",u:["Repairs starship Pulse Engine","Early game repairs"],rec:[["Condensed Carbon",30]]},
+ {n:"Microprocessor",s:"µP",c:"crafted",d:"Advanced electronic component.",src:"Craft from Chromatic Metal and Carbon Nanotubes.",u:["Ingredient in many upgrades and base tech","Good sell value"],rec:[["Chromatic Metal",40],["Carbon Nanotubes",1]]},
+ {n:"Starship Launch Fuel",s:"LF",c:"fuel",d:"Fuels the Launch Thruster.",src:"Craft from Di-hydrogen and Metal Plating.",u:["Fully recharges the Launch Thruster"],rec:[["Di-hydrogen",50],["Metal Plating",1]]},
+ {n:"Life Support Gel",s:"LSG",c:"fuel",d:"Fully recharges Life Support.",src:"Craft from Di-hydrogen.",u:["Recharges Life Support to full"],rec:[["Di-hydrogen",40]]},
+ {n:"Ion Battery",s:"IB",c:"fuel",d:"Portable power cell.",src:"Craft from Ferrite Dust and Cobalt.",u:["Recharges Hazard Protection, Shields and Exosuit tech"],rec:[["Ferrite Dust",20],["Cobalt",10]]},
+ {n:"Antimatter",s:"AM",c:"tech",d:"Volatile fuel component for warp travel.",src:"Craft from Chromatic Metal and Condensed Carbon.",u:["Ingredient in Warp Cell"],rec:[["Chromatic Metal",25],["Condensed Carbon",20]]},
+ {n:"Antimatter Housing",s:"AH",c:"tech",d:"Containment vessel for Antimatter.",src:"Craft from Ferrite Dust.",u:["Ingredient in Warp Cell"],rec:[["Ferrite Dust",30]]},
+ {n:"Warp Cell",s:"WC",c:"fuel",d:"Fuels the Hyperdrive. One cell = one full charge.",src:"Craft from Antimatter and Antimatter Housing; buy from stations.",u:["Recharges the Hyperdrive for interstellar jumps"],rec:[["Antimatter",1],["Antimatter Housing",1]]},
+ {n:"Glass",s:"Gl",c:"crafted",d:"Transparent building material.",src:"Craft from Silicate Powder (or Frost Crystal).",u:["Ingredient in Living Glass","Base building"],rec:[["Silicate Powder",40]]},
+ {n:"Lubricant",s:"Lu",c:"crafted",d:"Industrial oil.",src:"Craft from Gamma Root and Faecium.",u:["Ingredient in Living Glass","Sells for good units"],rec:[["Gamma Root",50],["Faecium",50]]},
+ {n:"Living Glass",s:"LG",c:"crafted",d:"High-value trade product.",src:"Craft from Glass and Lubricant.",u:["Sells for very high value","Ingredient in Stasis Device chain"],rec:[["Glass",1],["Lubricant",1]]},
+ {n:"Heat Capacitor",s:"HC",c:"crafted",d:"Thermal storage unit.",src:"Craft from Frost Crystal and Solanium.",u:["Ingredient in Circuit Board"],rec:[["Frost Crystal",100],["Solanium",100]]},
+ {n:"Poly Fibre",s:"PF",c:"crafted",d:"Synthetic fibre.",src:"Craft from Cactus Flesh and Star Bulb.",u:["Ingredient in Circuit Board"],rec:[["Cactus Flesh",100],["Star Bulb",200]]},
+ {n:"Circuit Board",s:"CB",c:"crafted",d:"High-value trade product.",src:"Craft from Heat Capacitor and Poly Fibre.",u:["Sells for very high value","Ingredient in Stasis Device chain"],rec:[["Heat Capacitor",1],["Poly Fibre",1]]},
+ {n:"Unstable Gel",s:"UG",c:"crafted",d:"Volatile compound.",src:"Craft from Cactus Flesh.",u:["Ingredient in Liquid Explosive"],rec:[["Cactus Flesh",200]]},
+ {n:"Acid",s:"Ac",c:"crafted",d:"Corrosive compound.",src:"Craft from Mordite and Fungal Mould.",u:["Ingredient in Liquid Explosive"],rec:[["Mordite",25],["Fungal Mould",600]]},
+ {n:"Liquid Explosive",s:"LE",c:"crafted",d:"High-value trade product.",src:"Craft from Unstable Gel and Acid.",u:["Sells for very high value","Ingredient in Stasis Device chain"],rec:[["Unstable Gel",1],["Acid",1]]},
+ {n:"Wiring Loom",s:"WL",c:"tech",d:"Cannot be crafted. Bought from station terminals.",src:"Galactic Trade Terminals on space stations.",u:["Required for most base tech and starship upgrades"]},
+ {n:"Salvaged Data",s:"SD",c:"trade",d:"Buried technology fragments.",src:"Dig up Buried Technology Modules with the Terrain Manipulator.",u:["Unlocks blueprints at the Anomaly's Construction Research Station"]},
+ {n:"Storm Crystal",s:"SC",c:"trade",d:"Rare crystals that appear only during extreme storms.",src:"Extreme-weather planets during a storm.",u:["Sells for very high value","Ingredient in some Exocraft upgrades"]},
+ {n:"Nanites",s:"Nn",c:"trade",d:"Nanite clusters — the technology currency.",src:"Refine Pugneum, Larval Cores or Runaway Mould; sell upgrade modules; complete missions.",u:["Buy upgrade modules from station vendors","Upgrade starship class","Salvage and buy blueprints"]},
+ {n:"Quicksilver",s:"Qs",c:"trade",d:"Anomaly currency.",src:"Nexus missions and Quicksilver missions at the Space Anomaly.",u:["Buy cosmetic items and special rewards at the Anomaly's Quicksilver Synthesis Companion"]},
+ {n:"Units",s:"U",c:"trade",d:"The standard galactic currency.",src:"Sell items, scan wildlife and flora, complete missions.",u:["Buy starships, Multi-Tools, freighters and goods"]},
+];
+BASE[0].ref = "—"; // clean up Carbon's ref line
+
+// ---------- STATE ----------
+let items = BASE.map(x=>({...x}));
+let inv = {};        // name -> qty
+let cat = "all";
+let selected = null;
+const $ = id=>document.getElementById(id);
+const byName = n => items.find(i=>i.n.toLowerCase()===n.toLowerCase());
+const usedIn = n => items.filter(i=>i.rec && i.rec.some(r=>r[0].toLowerCase()===n.toLowerCase()));
+
+// ---------- TABS ----------
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x===t));
+  document.querySelectorAll(".view").forEach(v=>v.classList.toggle("on",v.id==="v-"+t.dataset.v));
+  render();
+});
+
+// ---------- ENCYCLOPEDIA ----------
+function renderCats(){
+  const el=$("cats"); el.innerHTML="";
+  [["all","All"],...Object.entries(CAT)].forEach(([k,v])=>{
+    const b=document.createElement("button");b.className="chip"+(cat===k?" on":"");b.textContent=v;
+    b.onclick=()=>{cat=k;render();};el.appendChild(b);
+  });
+}
+function renderList(){
+  const q=$("q").value.trim().toLowerCase();
+  const el=$("list"); el.innerHTML="";
+  const hits=items.filter(i=>(cat==="all"||i.c===cat)&&(!q||i.n.toLowerCase().includes(q)||i.s.toLowerCase()===q||(i.u||[]).join(" ").toLowerCase().includes(q)));
+  if(!hits.length){el.innerHTML='<div class="empty" style="grid-column:1/-1">Nothing matches. Add it on the Add item tab.</div>';return;}
+  hits.forEach(i=>{
+    const c=document.createElement("div");c.className="card";c.style.setProperty("--c",COLOR[i.c]);
+    c.innerHTML=`<div class="sym">${i.s}</div><div class="nm">${i.n}</div>${inv[i.n]?`<div class="qty">×${inv[i.n]}</div>`:""}`;
+    c.onclick=()=>{selected=i.n;renderDetail();$("detail").scrollIntoView({behavior:"smooth",block:"start"});};
+    el.appendChild(c);
+  });
+}
+function renderDetail(){
+  const el=$("detail"); const i=selected&&byName(selected); if(!i){el.innerHTML="";return;}
+  const link=n=>`<span class="link" data-go="${n}">${n}</span>`;
+  const rec=i.rec?`<div class="eyebrow k">Recipe</div><ul class="plain">${i.rec.map(([n,a])=>{const have=inv[n]||0;return `<li>${link(n)} × ${a} <span class="${have>=a?'ok':'no'}" style="float:right">${have}/${a}</span></li>`;}).join("")}</ul>`:"";
+  const used=usedIn(i.n);
+  el.innerHTML=`
+    <div class="eyebrow" style="color:${COLOR[i.c]}">${CAT[i.c]} · ${i.s}</div>
+    <h2>${i.n}</h2>
+    <p>${i.d}</p>
+    <div class="eyebrow k">Uses</div>
+    <ul class="plain">${(i.u||[]).map(u=>`<li>${u}</li>`).join("")||"<li>—</li>"}</ul>
+    ${used.length?`<div class="eyebrow k">Ingredient in</div><ul class="plain">${used.map(x=>`<li>${link(x.n)}</li>`).join("")}</ul>`:""}
+    ${rec}
+    <div class="meta">
+      <div><b>Where to find</b>${i.src||"—"}</div>
+      ${i.ref&&i.ref!=="—"?`<div><b>Refiner input</b>${i.ref}</div>`:""}
+    </div>
+    <div class="stepper">
+      <button class="b" data-d="-10">−10</button><button class="b" data-d="-1">−</button>
+      <input type="number" min="0" id="dq" value="${inv[i.n]||0}">
+      <button class="b" data-d="1">+</button><button class="b" data-d="10">+10</button>
+    </div>
+    <p class="note">Carrying in inventory. Edits sync to the Inventory tab.</p>`;
+  el.querySelectorAll("[data-go]").forEach(s=>s.onclick=()=>{selected=s.dataset.go;renderDetail();});
+  el.querySelectorAll("[data-d]").forEach(b=>b.onclick=()=>setQty(i.n,(inv[i.n]||0)+ +b.dataset.d));
+  $("dq").onchange=e=>setQty(i.n,+e.target.value);
+}
+$("q").oninput=renderList;
+
+// ---------- INVENTORY ----------
+function setQty(n,q){q=Math.max(0,Math.floor(q||0)); if(q)inv[n]=q; else delete inv[n]; render();}
+function renderInv(){
+  const pick=$("invPick"); const cur=pick.value;
+  pick.innerHTML=items.slice().sort((a,b)=>a.n.localeCompare(b.n)).map(i=>`<option>${i.n}</option>`).join("");
+  if(cur)pick.value=cur;
+  const el=$("slots"); el.innerHTML="";
+  const names=Object.keys(inv).sort();
+  if(!names.length){el.innerHTML='<div class="empty" style="grid-column:1/-1">Nothing carried yet. Pick an item above and add a quantity.</div>';return;}
+  names.forEach(n=>{const i=byName(n)||{s:"?",c:"raw"};const s=document.createElement("div");s.className="slot";s.style.setProperty("--c",COLOR[i.c]);
+    s.innerHTML=`<div class="sym">${i.s}</div><div class="nm">${n}</div><div class="q">${inv[n]}</div>`;
+    s.onclick=()=>{selected=n;document.querySelector('[data-v="enc"]').click();renderDetail();$("detail").scrollIntoView();};el.appendChild(s);});
+}
+$("invAdd").onclick=()=>{const n=$("invPick").value;setQty(n,(inv[n]||0)+ +$("invQty").value);toast(`Added ${n}`);};
+$("clearBtn").onclick=()=>{if(confirm("Empty the whole inventory?")){inv={};render();}};
+$("exportBtn").onclick=()=>{
+  const custom=items.filter(i=>!BASE.some(b=>b.n===i.n)||JSON.stringify(BASE.find(b=>b.n===i.n))!==JSON.stringify(i));
+  const blob=new Blob([JSON.stringify({inv,custom},null,2)],{type:"application/json"});
+  const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="nms-inventory.json";a.click();toast("Exported");
+};
+$("importBtn").onclick=()=>$("importFile").click();
+$("importFile").onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);inv=d.inv||{};(d.custom||[]).forEach(upsert);render();toast("Imported");}catch{toast("That file isn't a valid export");}};r.readAsText(f);};
+
+// ---------- CRAFTABLE ----------
+function renderCraft(){
+  const el=$("craftList");el.innerHTML="";
+  const rows=items.filter(i=>i.rec).map(i=>{const times=Math.min(...i.rec.map(([n,a])=>Math.floor((inv[n]||0)/a)));return {i,times};}).filter(r=>r.times>0).sort((a,b)=>b.times-a.times);
+  if(!rows.length){el.innerHTML='<div class="empty">Nothing craftable yet. Add materials on the Inventory tab and recipes will light up here.</div>';return;}
+  rows.forEach(({i,times})=>{const d=document.createElement("div");d.className="craft";
+    d.innerHTML=`<div class="nm">${i.n} <span class="ok" style="float:right">×${times}</span></div><div class="note" style="margin-top:2px">${i.rec.map(([n,a])=>`${n} ${a}`).join(" + ")}</div><button class="b" style="margin-top:8px">Craft one</button>`;
+    d.querySelector("button").onclick=()=>{i.rec.forEach(([n,a])=>inv[n]-=a);Object.keys(inv).forEach(k=>{if(inv[k]<=0)delete inv[k];});inv[i.n]=(inv[i.n]||0)+1;render();toast(`Crafted ${i.n}`);};
+    el.appendChild(d);});
+}
+
+// ---------- ADD ----------
+$("aCat").innerHTML=Object.entries(CAT).map(([k,v])=>`<option value="${k}">${v}</option>`).join("");
+function upsert(it){const k=items.findIndex(i=>i.n.toLowerCase()===it.n.toLowerCase());if(k>=0)items[k]=it;else items.push(it);}
+$("aSave").onclick=()=>{
+  const n=$("aName").value.trim();if(!n){toast("Give the item a name");return;}
+  const rec=$("aRec").value.split("\n").map(l=>l.split(/\s*x\s*/i)).filter(p=>p.length===2&&p[0].trim()).map(p=>[p[0].trim(),+p[1]||1]);
+  upsert({n,s:$("aSym").value.trim()||n.slice(0,2),c:$("aCat").value,d:$("aDesc").value.trim(),src:$("aSrc").value.trim(),
+    u:$("aUses").value.split("\n").map(s=>s.trim()).filter(Boolean),rec:rec.length?rec:undefined,ref:$("aRef").value.trim()||undefined});
+  ["aName","aSym","aDesc","aSrc","aUses","aRec","aRef"].forEach(id=>$(id).value="");
+  selected=n;render();toast(`Saved ${n}`);document.querySelector('[data-v="enc"]').click();
+};
+
+// ---------- MISC ----------
+function toast(m){const t=$("toast");t.textContent=m;t.style.display="block";clearTimeout(t._h);t._h=setTimeout(()=>t.style.display="none",1600);}
+function render(){renderCats();renderList();renderDetail();renderInv();renderCraft();}
+render();
+</script>
+</body>
+</html>
