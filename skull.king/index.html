@@ -62,11 +62,19 @@
   .bonus { margin-top:12px; padding-top:11px; border-top:1px dashed rgba(232,223,201,.15); }
   .chips { display:flex; flex-wrap:wrap; gap:6px; margin-top:7px; }
   .chip {
-    font:400 11px 'Karla',sans-serif; padding:6px 9px; border-radius:999px; cursor:pointer;
+    font:400 12px 'Karla',sans-serif; padding:7px 10px; border-radius:999px; cursor:pointer;
     background:transparent; color:rgba(232,223,201,.7); border:1px solid rgba(232,223,201,.2);
   }
   .chip:hover { border-color:var(--brass); color:var(--brass); }
   .chip.clear { border-color:rgba(181,67,58,.5); color:rgba(181,67,58,.9); }
+  .chip.on { border-color:var(--brass); color:var(--brass); background:rgba(201,151,63,.1); }
+  .chip.on i { font-style:normal; font-weight:700; margin-left:4px; }
+  .pip.aim { border-color:var(--brass); box-shadow:inset 0 0 0 1px var(--brass); }
+  .deal {
+    font-family:'Barlow Semi Condensed',sans-serif; font-size:10px; letter-spacing:.16em; text-transform:uppercase;
+    color:var(--brass); border:1px solid rgba(201,151,63,.5); border-radius:2px; padding:2px 6px; margin-left:8px; vertical-align:middle;
+  }
+  .info { color:rgba(232,223,201,.55); }
   .bonusval { font-family:'Barlow Semi Condensed',sans-serif; font-size:15px; color:var(--brass); }
 
   .bar {
@@ -152,6 +160,8 @@ const BONUSES = [
   { v: 50, label: "Mermaid takes Skull King" },
 ];
 
+const KEY = "skullking_game_v1";
+
 const S = {
   phase: "setup",      // setup | play | final
   step: "bid",         // bid | tally
@@ -159,10 +169,20 @@ const S = {
   names: ["", "", ""],
   players: [],
   rounds: [],
+  ret: null,           // where to return after fixing an earlier round
 };
 
+function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+function load() {
+  try {
+    const s = JSON.parse(localStorage.getItem(KEY));
+    if (s && s.phase && Array.isArray(s.players) && Array.isArray(s.rounds)) Object.assign(S, s);
+  } catch (e) {}
+}
+
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;" }[c]));
-const blank = () => ({ bid: null, tricks: null, bonus: 0 });
+const blank = () => ({ bid: null, tricks: null, bonus: 0, log: [] });
+const dealerOf = (ri) => S.players[ri % S.players.length];
 
 function scoreOf(e, roundNum) {
   if (e.bid === null || e.tricks === null) return 0;
@@ -219,10 +239,12 @@ function playView() {
   const trickSum = S.players.reduce((s, p) => s + (e[p.id].tricks ?? 0), 0);
   const tricksIn = S.players.every((p) => e[p.id].tricks !== null);
   const bidsIn = S.players.every((p) => e[p.id].bid !== null);
+  const bidSum = S.players.reduce((s, p) => s + (e[p.id].bid ?? 0), 0);
+  const dealer = dealerOf(S.ri);
 
   title.textContent = "Round " + rn;
   subtitle.textContent = bidding
-    ? `${rn} card${rn > 1 ? "s" : ""} · bids`
+    ? `${rn} card${rn > 1 ? "s" : ""} · ${dealer.name} deals`
     : `Tricks won · ${trickSum} of ${rn}`;
 
   main.innerHTML = S.players.map((p) => {
@@ -231,7 +253,8 @@ function playView() {
     const pts = done ? scoreOf(en, rn) : null;
     const pips = Array.from({ length: rn + 1 }, (_, n) => {
       const on = bidding ? en.bid === n : en.tricks === n;
-      return `<button class="pip${n === 0 ? " zero" : ""}" aria-pressed="${on}" data-pip="${p.id}" data-val="${n}">${n}</button>`;
+      const aim = !bidding && en.bid === n && !on;
+      return `<button class="pip${n === 0 ? " zero" : ""}${aim ? " aim" : ""}" aria-pressed="${on}" data-pip="${p.id}" data-val="${n}">${n}</button>`;
     }).join("");
 
     const bonus = bidding ? "" : `
@@ -241,8 +264,12 @@ function playView() {
           <div class="bonusval">+${en.bonus}</div>
         </div>
         <div class="chips">
-          ${BONUSES.map((b) => `<button class="chip" data-bonus="${p.id}" data-add-val="${b.v}">+${b.v} ${b.label}</button>`).join("")}
-          ${en.bonus > 0 ? `<button class="chip clear" data-bonus="${p.id}" data-add-val="clear">Clear</button>` : ""}
+          ${BONUSES.map((b, i) => {
+            const c = (en.log || []).filter((x) => x === i).length;
+            return `<button class="chip${c ? " on" : ""}" data-bonus="${p.id}" data-add-val="${i}">+${b.v} ${b.label}${c ? `<i>×${c}</i>` : ""}</button>`;
+          }).join("")}
+          ${en.bonus > 0 ? `<button class="chip" data-bonus="${p.id}" data-add-val="undo">Undo last</button>
+          <button class="chip clear" data-bonus="${p.id}" data-add-val="clear">Clear</button>` : ""}
         </div>
       </div>`;
 
@@ -250,7 +277,7 @@ function playView() {
       <div class="card">
         <div class="row-head">
           <div>
-            <div class="name">${esc(p.name)}</div>
+            <div class="name">${esc(p.name)}${p.id === dealer.id ? '<span class="deal">Dealer</span>' : ""}</div>
             <div class="tag">${t[p.id]} total${!bidding && en.bid !== null ? " · bid " + en.bid : ""}</div>
           </div>
           ${!bidding && pts !== null ? `<div class="proj ${pts < 0 ? "neg" : "pos"}">${pts > 0 ? "+" : ""}${pts}</div>` : ""}
@@ -260,11 +287,15 @@ function playView() {
         ${bonus}
       </div>`;
   }).join("")
+  + (bidding && bidsIn
+      ? `<p class="warn info">Bids total ${bidSum} for ${rn} trick${rn > 1 ? "s" : ""} · ${bidSum > rn ? "overbid" : bidSum < rn ? "underbid" : "even"}</p>` : "")
   + (!bidding && tricksIn && trickSum !== rn
       ? `<p class="warn">${trickSum} tricks logged, ${rn} were dealt — check for a Kraken</p>` : "")
   + ledger(t, S.ri);
 
-  const nextLabel = bidding ? "Lock in bids" : (S.ri === ROUNDS - 1 ? "Final tally" : "Score round " + rn);
+  const nextLabel = bidding ? "Lock in bids"
+    : S.ret ? "Save fix"
+    : (S.ri === ROUNDS - 1 ? "Final tally" : "Score round " + rn);
   bar.innerHTML = `
     <button class="act ghost" data-back ${bidding && S.ri === 0 ? "disabled" : ""}>Back</button>
     <button class="act" data-next ${(bidding ? bidsIn : tricksIn) ? "" : "disabled"}>${nextLabel}</button>`;
@@ -334,6 +365,7 @@ function render() {
   if (S.phase === "setup") { title.textContent = "Skull King"; subtitle.textContent = "Muster the crew"; setupView(); }
   else if (S.phase === "play") playView();
   else finalView();
+  save();
 }
 
 /* ---------- events ---------- */
@@ -353,7 +385,11 @@ document.addEventListener("click", (ev) => {
   }
   else if (d.bonus) {
     const e = S.rounds[S.ri][d.bonus];
-    e.bonus = d.addVal === "clear" ? 0 : e.bonus + +d.addVal;
+    e.log = e.log || [];
+    if (d.addVal === "clear") e.log = [];
+    else if (d.addVal === "undo") e.log.pop();
+    else e.log.push(+d.addVal);
+    e.bonus = e.log.reduce((s, i) => s + BONUSES[i].v, 0);
     render();
   }
   else if ("back" in d) {
@@ -363,19 +399,27 @@ document.addEventListener("click", (ev) => {
   }
   else if ("next" in d) {
     if (S.step === "bid") S.step = "tally";
+    else if (S.ret) { Object.assign(S, S.ret); S.ret = null; }
     else if (S.ri === ROUNDS - 1) S.phase = "final";
     else { S.ri++; S.step = "bid"; }
     window.scrollTo({ top: 0 });
     render();
   }
-  else if (d.edit !== undefined) { S.ri = +d.edit; S.step = "bid"; S.phase = "play"; window.scrollTo({ top: 0 }); render(); }
-  else if ("reset" in d) { S.phase = "setup"; S.rounds = []; render(); }
+  else if (d.edit !== undefined) {
+    if (+d.edit !== S.ri || S.phase === "final") S.ret = S.ret || { ri: S.ri, step: S.step, phase: S.phase };
+    S.ri = +d.edit; S.step = "bid"; S.phase = "play"; window.scrollTo({ top: 0 }); render();
+  }
+  else if ("reset" in d) {
+    if (!confirm("Start a new game? The current ledger will be cleared.")) return;
+    S.phase = "setup"; S.rounds = []; S.players = []; S.ret = null; S.ri = 0; S.step = "bid"; render();
+  }
 });
 
 document.addEventListener("input", (ev) => {
   if (ev.target.dataset.name !== undefined) S.names[+ev.target.dataset.name] = ev.target.value;
 });
 
+load();
 render();
 </script>
 </body>
