@@ -137,7 +137,8 @@
     @keyframes blink { 0%,55% {opacity:1;} 56%,100% {opacity:0.18;} }
 
     /* ============== SHELF ============== */
-    .shelf { padding: clamp(2rem, 5vw, 3.5rem) 0 4rem; }
+    .shelf { padding: clamp(2rem, 5vw, 3.5rem) 0 1.5rem; }
+    .shelf:last-child { padding-bottom: 4rem; }
 
     .shelf-head {
       display: flex;
@@ -328,20 +329,14 @@
           <span class="family">FAMILY</span>
           <span class="games">GAMES</span>
         </h1>
-        <p class="tagline">A tiny family studio making small games and coding experiments. Pick a cabinet and play.</p>
+        <p class="tagline">A tiny family studio making small games, score keepers, and handy little apps. Pick a cabinet and play.</p>
         <p class="startline">&#9654; Insert coin to begin</p>
         <div class="bulbs bot"></div>
       </header>
     </div>
 
-    <!-- ============== SHELF ============== -->
-    <section class="shelf">
-      <div class="shelf-head">
-        <h2>Cabinet select</h2>
-        <span class="count" id="shelfCount">&mdash;</span>
-      </div>
-      <div class="grid" id="grid"></div>
-    </section>
+    <!-- ============== SHELVES (one per kind, built from `projects`) ============== -->
+    <div id="shelves"></div>
 
   </div>
 
@@ -355,11 +350,17 @@
 
   <script>
     // ---- Add a project here and it shows up on the shelf. ----
-    // status: 'live'  -> playable, links to href
-    //         'soon'  -> reserved slot, not clickable
+    // kind:   'game' -> Games shelf   | 'app' -> Apps shelf
+    // status: 'live' -> links to href | 'soon' -> reserved slot, not clickable
+    const SHELVES = [
+      { kind: 'game', title: 'Games',           chip: 'Playable', cta: 'Play now' },
+      { kind: 'app',  title: 'Apps & tools',    chip: 'Ready',    cta: 'Open' },
+    ];
+
     const projects = [
       {
         name: 'Coloroid',
+        kind: 'game',
         tag: 'Flood puzzle',
         desc: 'Flood the board one color at a time. Starts at 4\u00d74 and grows one level bigger with every win.',
         status: 'live',
@@ -369,6 +370,7 @@
       },
       {
         name: 'Heads Up',
+        kind: 'game',
         tag: 'Party game',
         desc: 'Hold the phone to your forehead and guess the word from your team\u2019s clues before time runs out.',
         status: 'live',
@@ -377,13 +379,24 @@
         preview: 'headsup'
       },
       {
-        name: 'Skull King',
-        tag: 'Trick-taking card game',
-        desc: 'A pirate-themed trick-taking game with bidding, special cards, and escalating rounds.',
+        name: 'Skull King Scorer',
+        kind: 'app',
+        tag: 'Card game score keeper',
+        desc: 'Keep score for the pirate trick-taking card game. Bids, tricks, bonuses, and a running ledger for 2 to 8 players.',
         status: 'live',
         href: './skull.king/index.html',
         accent: '#ffc24b',
         preview: 'skullking'
+      },
+      {
+        name: 'Traveller\u2019s Catalogue',
+        kind: 'app',
+        tag: 'No Man\u2019s Sky companion',
+        desc: 'Look up resources and recipes, track what you\u2019re carrying, and see what you can craft right now.',
+        status: 'live',
+        href: './nms/index.html',
+        accent: '#4fd8e0',
+        preview: 'nms'
       }
     ];
 
@@ -504,6 +517,45 @@
       return wrap;
     }
 
+    function makeNmsPreview() {
+      const wrap = document.createElement('div');
+      wrap.className = 'cab-icon';
+      // honeycomb of inventory slots, like the in-game grid
+      const hex = 'M0 -17 L15 -8.5 L15 8.5 L0 17 L-15 8.5 L-15 -8.5 Z';
+      const slots = [
+        { x: 68,  y: 42, sym: 'Cu', c: '#ffb03b', q: 250 },
+        { x: 100, y: 42, sym: 'Fe', c: '#9be15d', q: 999 },
+        { x: 132, y: 42, sym: 'Na', c: '#ffb03b', q: 120 },
+        { x: 52,  y: 70, sym: 'C',  c: '#8a94b3', q: 480 },
+        { x: 84,  y: 70, sym: 'O2', c: '#ff5e6c', q: 330 },
+        { x: 116, y: 70, sym: 'Cr', c: '#4fd8e0', q: 75  },
+        { x: 148, y: 70, sym: 'H',  c: '#4fd8e0', q: 40  },
+        { x: 68,  y: 98, sym: 'Au', c: '#ffb03b', q: 12  },
+        { x: 100, y: 98, sym: 'Ag', c: '#8a94b3', q: 60  },
+        { x: 132, y: 98, sym: 'Pt', c: '#4fd8e0', q: 8   },
+      ];
+      const cells = slots.map(s => `
+        <g transform="translate(${s.x}, ${s.y})">
+          <path d="${hex}" fill="#141a2c" stroke="${s.c}" stroke-width="1.4"/>
+          <text y="1" font-family="'Space Mono', monospace" font-weight="700" font-size="9" fill="${s.c}" text-anchor="middle">${s.sym}</text>
+          <text y="11" font-family="'Space Mono', monospace" font-size="5.5" fill="#8a94b3" text-anchor="middle">${s.q}</text>
+        </g>`).join('');
+      wrap.innerHTML = `
+        <svg viewBox="0 0 200 120" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <g opacity="0.5">
+            <circle cx="22" cy="22" r="1.4" fill="#eef1f8"/>
+            <circle cx="178" cy="18" r="1" fill="#eef1f8"/>
+            <circle cx="186" cy="100" r="1.6" fill="#4fd8e0"/>
+            <circle cx="16" cy="96" r="1" fill="#ffb03b"/>
+            <circle cx="180" cy="60" r="9" fill="none" stroke="#ffb03b" stroke-width="1" stroke-dasharray="2,3"/>
+            <circle cx="180" cy="60" r="3.5" fill="#ffb03b"/>
+          </g>
+          ${cells}
+          <text x="100" y="16" font-family="'Space Mono', monospace" font-size="6.5" letter-spacing="2.5" fill="#4fd8e0" text-anchor="middle">EXOSUIT INVENTORY</text>
+        </svg>`;
+      return wrap;
+    }
+
     function buildScreen(p) {
       const screen = document.createElement('div');
       screen.className = 'screen';
@@ -513,6 +565,8 @@
         screen.appendChild(makeHeadsUpPreview());
       } else if (p.preview === 'skullking') {
         screen.appendChild(makeSkullKingPreview());
+      } else if (p.preview === 'nms') {
+        screen.appendChild(makeNmsPreview());
       } else {
         const ns = document.createElement('div');
         ns.className = 'nosignal';
@@ -522,14 +576,14 @@
       return screen;
     }
 
-    function buildCabinet(p) {
+    function buildCabinet(p, shelf) {
       const live = p.status === 'live';
       const el = document.createElement(live ? 'a' : 'div');
       el.className = 'cabinet ' + (live ? 'live' : 'soon');
       el.style.setProperty('--accent', p.accent);
       if (live) {
         el.href = p.href;
-        el.setAttribute('aria-label', 'Play ' + p.name);
+        el.setAttribute('aria-label', (p.kind === 'game' ? 'Play ' : 'Open ') + p.name);
       }
 
       el.appendChild(buildScreen(p));
@@ -539,23 +593,34 @@
       body.innerHTML = `
         <div class="cab-top">
           <span class="cab-name">${p.name}</span>
-          <span class="chip ${live ? 'live' : 'soon'}">${live ? 'Playable' : 'Coming soon'}</span>
+          <span class="chip ${live ? 'live' : 'soon'}">${live ? shelf.chip : 'Coming soon'}</span>
         </div>
         <span class="cab-tag">${p.tag}</span>
         <p class="cab-desc">${p.desc}</p>
         <span class="cab-cta ${live ? '' : 'muted'}">
-          ${live ? 'Play now <span class="arrow">&rarr;</span>' : 'Insert coin'}
+          ${live ? shelf.cta + ' <span class="arrow">&rarr;</span>' : 'Insert coin'}
         </span>`;
       el.appendChild(body);
       return el;
     }
 
-    const grid = document.getElementById('grid');
-    projects.forEach(p => grid.appendChild(buildCabinet(p)));
-
-    const liveCount = projects.filter(p => p.status === 'live').length;
-    document.getElementById('shelfCount').textContent =
-      `${liveCount} playable / ${projects.length} on the shelf`;
+    const shelves = document.getElementById('shelves');
+    SHELVES.forEach(shelf => {
+      const items = projects.filter(p => p.kind === shelf.kind);
+      if (!items.length) return;
+      const live = items.filter(p => p.status === 'live').length;
+      const section = document.createElement('section');
+      section.className = 'shelf';
+      section.innerHTML = `
+        <div class="shelf-head">
+          <h2>${shelf.title}</h2>
+          <span class="count">${live} of ${items.length} ${live === 1 ? 'is' : 'are'} ${shelf.chip.toLowerCase()}</span>
+        </div>
+        <div class="grid"></div>`;
+      const grid = section.querySelector('.grid');
+      items.forEach(p => grid.appendChild(buildCabinet(p, shelf)));
+      shelves.appendChild(section);
+    });
 
     document.getElementById('year').textContent = new Date().getFullYear();
   </script>
