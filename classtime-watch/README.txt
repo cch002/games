@@ -30,7 +30,7 @@ The face
     in the hour before the first class, "Off the clock!" (with "--") otherwise.
   - Ring: progress through the current class, passing period or pre-school hour (awake only).
   - Time and full date at the top; next class with start time and room below the label.
-  - Unread notifications chip at the bottom (awake only, hidden when there are none).
+  - Three extra complication slots: left and right of the countdown, and a chip at the bottom.
 
 Customizing
   On the phone: Pixel Watch app > Watch faces > Class Time > Customize.
@@ -40,14 +40,20 @@ Customizing
     Countdown        Minutes and seconds, Minutes only
     Progress ring    Bold, Thin, Off
     Background       Black, Tinted
-    Date / Unread notifications                on or off
+    Date             on or off
 
 Complication slots (long-press > Edit > tap the area)
   Middle   Class Time "Current class" by default. Any other ranged or text complication also
            works there (steps, battery, weather...): its text goes where the countdown is and
            its progress drives the ring.
-  Bottom   Class Time "Next class" by default. Accepts text, ranged, icon and image
+  Next     Class Time "Next class" by default. Accepts text, ranged, icon and image
            complications. To hide it, choose "Empty".
+  Left     Round slot, watch battery by default.
+  Right    Round slot, step count by default.
+  Bottom   Chip, unread notifications by default.
+           Left/Right take ranged (drawn as a ring), text, icon and image complications;
+           Bottom takes text, ranged (fills the chip) and icon complications.
+           Choose "Empty" to hide any of them. All three hide in always-on mode.
   Class Time's two feeds also work in other watch faces (with icons), including Pixel faces.
   The Class Time app's own "Watch face" settings screen only affected the old face and does
   nothing here; Wear OS gives other apps no way to change a watch face's settings.

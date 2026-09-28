@@ -23,11 +23,11 @@ ACCENTS = [  # id, string name, colour
 # The next-class slot (y 306-366) and unread chip (y 372-406) are shared by all layouts.
 LAYOUTS = [
     dict(id="0", name="layout_countdown",
-         date=(56, 30, 20), time=(84, 66, 54), count=(152, 112, 96), label=(262, 40, 28)),
+         date=(56, 30, 20), time=(84, 66, 54), count=(156, 106, 88), label=(262, 40, 28)),
     dict(id="1", name="layout_clock",
          date=(58, 30, 20), time=(86, 118, 100), count=(204, 58, 50), label=(262, 40, 28)),
     dict(id="2", name="layout_minimal",
-         date=None, time=None, count=(126, 136, 118), label=(262, 40, 30)),
+         date=None, time=None, count=(140, 120, 92), label=(262, 40, 30)),
 ]
 
 ACCENT = "[CONFIGURATION.accent.0]"
@@ -254,17 +254,116 @@ def next_slot():
             f'<Complication type="EMPTY">{empty}</Complication></ComplicationSlot>')
 
 
-def unread_chip():
-    chip = ('<Condition><Expressions><Expression name="hasUnread">[UNREAD_NOTIFICATION_COUNT] &gt; 0</Expression>'
-            '</Expressions><Compare expression="hasUnread">'
-            '<PartDraw x="0" y="0" width="150" height="34">'
-            '<RoundRectangle x="0" y="0" width="150" height="34" cornerRadiusX="17" cornerRadiusY="17">'
-            '<Fill color="#FF1E293B"/></RoundRectangle>'
-            f'<Ellipse x="22" y="13" width="8" height="8"><Fill color="{ACCENT}"/></Ellipse></PartDraw>'
-            + text(34, 0, 104, 34, 18, "#FFCBD5E1", "%s Unread", ["[UNREAD_NOTIFICATION_COUNT]"], weight="SEMI_BOLD")
-            + '</Compare></Condition>')
-    return group("unread", bool_config("showUnread", group("chip", chip, x=150, y=372, w=150, h=34)),
-                 alpha=255, variant=AWAKE_ONLY)
+# ---------------------------------------------------------------- extra slots
+
+SIDE = 60                       # diameter of the round side slots
+SIDE_Y = 178                    # beside the countdown in every layout
+SIDE_XS = {"2": 38, "3": 352}   # slotId -> x (clear of the countdown and inside the ring)
+SLOT_BG = "#FF11161C"
+
+
+def side_contents(ranged):
+    c = SIDE / 2
+    bg = (f'<PartDraw x="0" y="0" width="{SIDE}" height="{SIDE}"><Ellipse x="0" y="0" width="{SIDE}" height="{SIDE}">'
+          f'<Fill color="{SLOT_BG}"/></Ellipse></PartDraw>')
+    ring = ""
+    if ranged:
+        d = SIDE - 6
+        ring = (f'<PartDraw x="0" y="0" width="{SIDE}" height="{SIDE}">'
+                f'<Arc centerX="{c}" centerY="{c}" width="{d}" height="{d}" startAngle="0" endAngle="360">'
+                f'<Stroke thickness="4" color="#FF1E293B"/></Arc></PartDraw>'
+                + condition([("sideRange", HAS_RANGE,
+                    f'<PartDraw x="0" y="0" width="{SIDE}" height="{SIDE}">'
+                    f'<Arc centerX="{c}" centerY="{c}" width="{d}" height="{d}" startAngle="0" endAngle="0">'
+                    f'<Stroke thickness="4" color="{ACCENT}" cap="ROUND"/>'
+                    f'<Transform target="endAngle" value="{GENERIC_PROGRESS}"/></Arc></PartDraw>')]))
+
+    def icon(y, size):
+        x = (SIDE - size) // 2
+        return (f'<PartImage x="{x}" y="{y}" width="{size}" height="{size}" tintColor="#FFCBD5E1">'
+                f'<Image resource="[COMPLICATION.MONOCHROMATIC_IMAGE]"/></PartImage>')
+
+    def line(y, h, size):
+        return text(4, y, SIDE - 8, h, size, "#FFE2E8F0", "%s", ["[COMPLICATION.TEXT]"], weight="MEDIUM", ellipsis=True)
+    body = condition([
+        ("sideIconText", "[COMPLICATION.MONOCHROMATIC_IMAGE] != null &amp;&amp; [COMPLICATION.TEXT] != null",
+         icon(10, 18) + line(28, 22, 15)),
+        ("sideText", "[COMPLICATION.TEXT] != null", line(18, 24, 18)),
+        ("sideIcon", "[COMPLICATION.MONOCHROMATIC_IMAGE] != null", icon(15, 30)),
+    ])
+    return bg + ring + body
+
+
+def side_slot(slot_id, provider, provider_type):
+    x = SIDE_XS[slot_id]
+    mono = (f'<PartDraw x="0" y="0" width="{SIDE}" height="{SIDE}"><Ellipse x="0" y="0" width="{SIDE}" height="{SIDE}">'
+            f'<Fill color="{SLOT_BG}"/></Ellipse></PartDraw>'
+            f'<PartImage x="15" y="15" width="30" height="30" tintColor="#FFCBD5E1">'
+            f'<Image resource="[COMPLICATION.MONOCHROMATIC_IMAGE]"/></PartImage>')
+    small = (f'<PartImage x="4" y="4" width="{SIDE - 8}" height="{SIDE - 8}">'
+             f'<Image resource="[COMPLICATION.SMALL_IMAGE]"/></PartImage>')
+    return (f'<ComplicationSlot x="{x}" y="{SIDE_Y}" width="{SIDE}" height="{SIDE}" slotId="{slot_id}" '
+            f'displayName="slot_side_{slot_id}_label" '
+            'supportedTypes="RANGED_VALUE SHORT_TEXT MONOCHROMATIC_IMAGE SMALL_IMAGE EMPTY">'
+            f'<DefaultProviderPolicy defaultSystemProvider="{provider}" defaultSystemProviderType="{provider_type}"/>'
+            f'<BoundingOval x="0" y="0" width="{SIDE}" height="{SIDE}"/>'
+            f'<Complication type="RANGED_VALUE">{side_contents(True)}</Complication>'
+            f'<Complication type="SHORT_TEXT">{side_contents(False)}</Complication>'
+            f'<Complication type="MONOCHROMATIC_IMAGE">{mono}</Complication>'
+            f'<Complication type="SMALL_IMAGE">{small}</Complication>'
+            f'<Complication type="EMPTY">{group("side_empty", "", w=SIDE, h=SIDE)}</Complication>'
+            f'<Variant mode="AMBIENT" target="alpha" value="0"/>'
+            f'</ComplicationSlot>')
+
+
+CHIP_X, CHIP_Y, CHIP_W, CHIP_H = 140, 372, 170, 34
+
+
+def chip_contents(ranged):
+    pill = (f'<PartDraw x="0" y="0" width="{CHIP_W}" height="{CHIP_H}">'
+            f'<RoundRectangle x="0" y="0" width="{CHIP_W}" height="{CHIP_H}" cornerRadiusX="17" cornerRadiusY="17">'
+            f'<Fill color="#FF1E293B"/></RoundRectangle></PartDraw>')
+    fill = ""
+    if ranged:
+        fill = condition([("chipRange", HAS_RANGE,
+            f'<PartDraw x="0" y="0" width="{CHIP_W}" height="{CHIP_H}" alpha="90">'
+            f'<RoundRectangle x="0" y="0" width="{CHIP_W}" height="{CHIP_H}" cornerRadiusX="17" cornerRadiusY="17">'
+            f'<Fill color="{ACCENT}"/>'
+            f'<Transform target="width" value="{CHIP_H} + ({CHIP_W} - {CHIP_H}) * clamp(([COMPLICATION.RANGED_VALUE_VALUE] - '
+            f'[COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1)"/>'
+            f'</RoundRectangle></PartDraw>')])
+    marker_icon = (f'<PartImage x="14" y="8" width="18" height="18" tintColor="{ACCENT}">'
+                   f'<Image resource="[COMPLICATION.MONOCHROMATIC_IMAGE]"/></PartImage>')
+    marker_dot = (f'<PartDraw x="19" y="13" width="8" height="8"><Ellipse x="0" y="0" width="8" height="8">'
+                  f'<Fill color="{ACCENT}"/></Ellipse></PartDraw>')
+
+    def words(template, params):
+        return text(36, 0, CHIP_W - 48, CHIP_H, 18, "#FFCBD5E1", template, params, weight="SEMI_BOLD", ellipsis=True)
+    body = condition([
+        ("chipTextTitle", "[COMPLICATION.TEXT] != null &amp;&amp; [COMPLICATION.TITLE] != null",
+         words("%s %s", ["[COMPLICATION.TEXT]", "[COMPLICATION.TITLE]"])),
+        ("chipText", "[COMPLICATION.TEXT] != null", words("%s", ["[COMPLICATION.TEXT]"])),
+    ])
+    marker = condition([("chipHasIcon", "[COMPLICATION.MONOCHROMATIC_IMAGE] != null", marker_icon)], default=marker_dot)
+    return pill + fill + marker + body
+
+
+def chip_slot():
+    mono = (f'<PartDraw x="0" y="0" width="{CHIP_W}" height="{CHIP_H}">'
+            f'<RoundRectangle x="0" y="0" width="{CHIP_W}" height="{CHIP_H}" cornerRadiusX="17" cornerRadiusY="17">'
+            f'<Fill color="#FF1E293B"/></RoundRectangle></PartDraw>'
+            f'<PartImage x="{(CHIP_W - 22) // 2}" y="6" width="22" height="22" tintColor="#FFCBD5E1">'
+            f'<Image resource="[COMPLICATION.MONOCHROMATIC_IMAGE]"/></PartImage>')
+    return (f'<ComplicationSlot x="{CHIP_X}" y="{CHIP_Y}" width="{CHIP_W}" height="{CHIP_H}" slotId="4" '
+            'displayName="slot_bottom_label" supportedTypes="SHORT_TEXT RANGED_VALUE MONOCHROMATIC_IMAGE EMPTY">'
+            '<DefaultProviderPolicy defaultSystemProvider="UNREAD_NOTIFICATION_COUNT" defaultSystemProviderType="SHORT_TEXT"/>'
+            f'<BoundingBox x="0" y="0" width="{CHIP_W}" height="{CHIP_H}"/>'
+            f'<Complication type="SHORT_TEXT">{chip_contents(False)}</Complication>'
+            f'<Complication type="RANGED_VALUE">{chip_contents(True)}</Complication>'
+            f'<Complication type="MONOCHROMATIC_IMAGE">{mono}</Complication>'
+            f'<Complication type="EMPTY">{group("chip_empty", "", w=CHIP_W, h=CHIP_H)}</Complication>'
+            '<Variant mode="AMBIENT" target="alpha" value="0"/>'
+            '</ComplicationSlot>')
 
 
 def background():
@@ -289,14 +388,15 @@ def user_configurations():
             '<ListOption id="0" displayName="background_black"/><ListOption id="1" displayName="background_tinted"/>'
             '</ListConfiguration>'
             '<BooleanConfiguration id="showDate" displayName="show_date_label" defaultValue="TRUE"/>'
-            '<BooleanConfiguration id="showUnread" displayName="show_unread_label" defaultValue="TRUE"/>'
             '</UserConfigurations>')
 
 
 def watchface():
     scene = (background()
              + list_config("layout", [(L["id"], date_block(L) + time_block(L)) for L in LAYOUTS])
-             + now_slot() + next_slot() + unread_chip())
+             + now_slot() + next_slot()
+             + side_slot("2", "WATCH_BATTERY", "RANGED_VALUE") + side_slot("3", "STEP_COUNT", "SHORT_TEXT")
+             + chip_slot())
     return ('<?xml version="1.0" encoding="utf-8"?>\n'
             '<!-- Generated by gen_face.py; edit that file, not this one. -->\n'
             f'<WatchFace width="{W}" height="{W}">'
