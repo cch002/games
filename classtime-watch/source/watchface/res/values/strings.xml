@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Class Time</string>
+    <string name="accent_label">Accent</string>
+    <string name="accent_teal">Teal</string>
+    <string name="accent_amber">Amber</string>
+    <string name="accent_coral">Coral</string>
+    <string name="accent_lilac">Lilac</string>
+    <string name="slot_now_label">Current class</string>
+    <string name="slot_next_label">Next class</string>
+    <string name="no_class_data">Class Time</string>
+</resources>
