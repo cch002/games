@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="eu.nohus.classtime.watchface.cluster">
+    <uses-feature android:name="android.hardware.type.watch"/>
+    <application android:label="@string/app_name" android:hasCode="false">
+        <meta-data android:name="com.google.android.wearable.standalone" android:value="true"/>
+        <property android:name="com.google.wear.watchface.format.version" android:value="2"/>
+        <property android:name="com.google.wear.watchface.format.publisher" android:value="classtime-handmade-1.0"/>
+    </application>
+</manifest>

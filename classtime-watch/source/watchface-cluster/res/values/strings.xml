@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Class Time Cluster</string>
+
+    <string name="accent_label">Colour</string>
+    <string name="accent_lime">Lime</string>
+    <string name="accent_amber">Amber</string>
+    <string name="accent_teal">Teal</string>
+    <string name="accent_sky">Sky</string>
+    <string name="accent_indigo">Indigo</string>
+    <string name="accent_pink">Pink</string>
+    <string name="accent_coral">Coral</string>
+    <string name="accent_white">White</string>
+
+    <string name="countdown_label">Countdown</string>
+    <string name="countdown_mmss">Minutes and seconds</string>
+    <string name="countdown_minutes">Minutes only</string>
+
+    <string name="slot_now_label">Current class</string>
+    <string name="slot_next_label">Next class</string>
+    <string name="slot_top_label">Top</string>
+    <string name="slot_topleft_label">Top left</string>
+    <string name="slot_bottomleft_label">Bottom left</string>
+    <string name="no_class_data">Class Time</string>
+    <string name="off_countdown">--</string>
+</resources>
