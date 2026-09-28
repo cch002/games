@@ -1,7 +1,7 @@
 Class Time for Pixel Watch 3
 
 Files
-  ClassTime-watch-v92.apk                 Watch app. Targets SDK 25 so notifications work, and adds two
+  ClassTime-watch-v93.apk                 Watch app. Targets SDK 25 so notifications work, and adds two
                                           complication data sources: "Current class" and "Next class".
   ClassTime-WatchFace.apk                 Class Time watch face (Watch Face Format v2, no code).
   ClassTime-phone-resigned.apk            Phone app, unchanged except re-signed with the same key.
@@ -13,7 +13,7 @@ Files
   source/                                 Source for the data feed and the watch face.
 
 Install / update (watch connected over adb)
-  adb install -r ClassTime-watch-v92.apk      # updates in place; keeps the synced timetable
+  adb install -r ClassTime-watch-v93.apk      # updates in place; keeps the synced timetable
   adb install ClassTime-WatchFace.apk
   adb shell pm grant eu.nohus.classtime android.permission.POST_NOTIFICATIONS
 
@@ -40,7 +40,15 @@ Customizing
     Countdown        Minutes and seconds, Minutes only
     Progress ring    Bold, Thin, Off
     Background       Black, Tinted
-    Date / Next class / Unread notifications   on or off
+    Date / Unread notifications                on or off
+
+Complication slots (long-press > Edit > tap the area)
+  Middle   Class Time "Current class" by default. Any other ranged or text complication also
+           works there (steps, battery, weather...): its text goes where the countdown is and
+           its progress drives the ring.
+  Bottom   Class Time "Next class" by default. Accepts text, ranged, icon and image
+           complications. To hide it, choose "Empty".
+  Class Time's two feeds also work in other watch faces (with icons), including Pixel faces.
   The Class Time app's own "Watch face" settings screen only affected the old face and does
   nothing here; Wear OS gives other apps no way to change a watch face's settings.
 

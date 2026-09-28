@@ -6,6 +6,7 @@ import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Icon;
 import android.support.wearable.complications.ProviderUpdateRequester;
 
 /**
@@ -45,6 +46,12 @@ public class ComplicationTickReceiver extends BroadcastReceiver {
                 PendingIntent.FLAG_UPDATE_CURRENT | FLAG_IMMUTABLE);
         AlarmManager alarms = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
         if (alarms != null) alarms.set(AlarmManager.RTC, at, pi);
+    }
+
+    /** A monochrome icon bundled in the app (res/drawable-nodpi), or null if it is missing. */
+    static Icon icon(Context context, String name) {
+        int id = context.getResources().getIdentifier(name, "drawable", context.getPackageName());
+        return id == 0 ? null : Icon.createWithResource(context, id);
     }
 
     static PendingIntent openApp(Context context) {

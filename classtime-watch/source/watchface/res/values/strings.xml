@@ -31,7 +31,6 @@
     <string name="background_tinted">Tinted</string>
 
     <string name="show_date_label">Date</string>
-    <string name="show_next_label">Next class</string>
     <string name="show_unread_label">Unread notifications</string>
 
     <string name="slot_now_label">Current class</string>
