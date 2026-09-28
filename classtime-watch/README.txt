@@ -9,6 +9,7 @@ Files
   classtime.jks                           Signing key (store/key password: classtime, alias: classtime).
   watchface-preview.png                   What the face looks like (awake).
   watchface-preview-ambient.png           Always-on mode.
+  watchface-options.png                   A few of the customization combinations.
   source/                                 Source for the data feed and the watch face.
 
 Install / update (watch connected over adb)
@@ -30,4 +31,17 @@ The face
   - Ring: progress through the current class, passing period or pre-school hour (awake only).
   - Time and full date at the top; next class with start time and room below the label.
   - Unread notifications chip at the bottom (awake only, hidden when there are none).
-  - Accent colour: long-press > Edit > Accent (Amber, Teal, Coral, Indigo).
+
+Customizing
+  On the phone: Pixel Watch app > Watch faces > Class Time > Customize.
+  On the watch: long-press the face > Edit.
+    Colour           Amber, Teal, Coral, Indigo, Lime, Sky, Pink, White
+    Layout           Countdown first, Clock first, Countdown only
+    Countdown        Minutes and seconds, Minutes only
+    Progress ring    Bold, Thin, Off
+    Background       Black, Tinted
+    Date / Next class / Unread notifications   on or off
+  The Class Time app's own "Watch face" settings screen only affected the old face and does
+  nothing here; Wear OS gives other apps no way to change a watch face's settings.
+
+  To change the design, edit source/watchface/gen_face.py and regenerate res/raw/watchface.xml.
