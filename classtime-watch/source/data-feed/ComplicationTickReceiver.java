@@ -9,8 +9,8 @@ import android.content.Intent;
 import android.support.wearable.complications.ProviderUpdateRequester;
 
 /**
- * Keeps the class complications fresh: every minute during lessons and breaks
- * (so the progress ring moves), otherwise at the next lesson boundary or midnight.
+ * Keeps the class complications fresh: every minute while a countdown is running (so faces
+ * that only read the ranged value still move), otherwise at the next boundary or midnight.
  * Uses a non-wakeup alarm, so a sleeping watch catches up when it next wakes.
  */
 public class ComplicationTickReceiver extends BroadcastReceiver {
@@ -33,7 +33,7 @@ public class ComplicationTickReceiver extends BroadcastReceiver {
         long now = System.currentTimeMillis();
         ClassSchedule s = ClassSchedule.compute(context, now);
         long at = s.validUntil;
-        if (s.state == ClassSchedule.LESSON || s.state == ClassSchedule.BREAK) {
+        if (s.resolveBlock(now)) {
             long nextMinute = (now / 60000L + 1) * 60000L;
             at = Math.min(at, nextMinute);
         }

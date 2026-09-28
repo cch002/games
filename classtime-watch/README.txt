@@ -1,17 +1,18 @@
 Class Time for Pixel Watch 3
 
 Files
-  ClassTime-watch-v91.apk                 Watch app. Targets SDK 25 so notifications work, and adds two
+  ClassTime-watch-v92.apk                 Watch app. Targets SDK 25 so notifications work, and adds two
                                           complication data sources: "Current class" and "Next class".
   ClassTime-WatchFace.apk                 Class Time watch face (Watch Face Format v2, no code).
   ClassTime-phone-resigned.apk            Phone app, unchanged except re-signed with the same key.
   ClassTime-watch-original-unmodified.apk Original watch app (syncs with the ORIGINAL phone app only).
   classtime.jks                           Signing key (store/key password: classtime, alias: classtime).
-  watchface-preview.png                   What the face looks like.
+  watchface-preview.png                   What the face looks like (awake).
+  watchface-preview-ambient.png           Always-on mode.
   source/                                 Source for the data feed and the watch face.
 
 Install / update (watch connected over adb)
-  adb install -r ClassTime-watch-v91.apk      # updates in place; keeps the synced timetable
+  adb install -r ClassTime-watch-v92.apk      # updates in place; keeps the synced timetable
   adb install ClassTime-WatchFace.apk
   adb shell pm grant eu.nohus.classtime android.permission.POST_NOTIFICATIONS
 
@@ -23,8 +24,10 @@ Phone (first time only): export your timetable, uninstall the original Class Tim
 install ClassTime-phone-resigned.apk, import the timetable. Edits on the phone sync to the watch.
 
 The face
-  - Ring: progress through the current lesson or break (hidden in always-on mode).
-  - Middle: lesson name and a live countdown ("32m left"), or "Break", "First class in 1h 5m",
-    "Classes over", "No classes".
-  - Bottom: next lesson with its start time and room, including the next school day.
-  - Accent colour: long-press > Edit > Accent (Teal, Amber, Coral, Lilac).
+  - Big countdown: M:SS while awake (ticks every second), whole minutes ("13m") in always-on.
+  - Label: "left in Per 3" during a class, "until Per 4" between classes, "until Homeroom"
+    in the hour before the first class, "Off the clock!" (with "--") otherwise.
+  - Ring: progress through the current class, passing period or pre-school hour (awake only).
+  - Time and full date at the top; next class with start time and room below the label.
+  - Unread notifications chip at the bottom (awake only, hidden when there are none).
+  - Accent colour: long-press > Edit > Accent (Amber, Teal, Coral, Indigo).

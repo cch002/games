@@ -17,6 +17,9 @@ final class ClassSchedule {
     static final int BREAK = 4;
     static final int AFTER = 5;        // after the last lesson today
 
+    /** How long before the first class of the day the "until ..." countdown starts. */
+    static final long LEAD_IN_MILLIS = 60 * 60 * 1000L;
+
     private static final String PREFS = "eu.nohus.classtime_preferences";
     private static final String TIMETABLE_KEY = "timetableData";
 
@@ -81,7 +84,9 @@ final class ClassSchedule {
             s.periodStart = midnight;
             s.periodEnd = midnight + firstStart * 60000L;
             s.setNextToday(engine, day, 1, midnight);
-            s.validUntil = s.periodEnd;
+            // The countdown to the first class starts an hour before it.
+            long leadIn = s.periodEnd - LEAD_IN_MILLIS;
+            s.validUntil = nowMillis < leadIn ? leadIn : s.periodEnd;
             return s;
         }
         if (minuteOfDay >= lastEnd) {
@@ -151,6 +156,44 @@ final class ClassSchedule {
                 return;
             }
         }
+    }
+
+    /**
+     * The block the countdown runs against: a lesson, the gap before the next lesson, or the
+     * hour before the first lesson. Fills blockStart/blockEnd/blockLabel; false when off the clock.
+     */
+    boolean resolveBlock(long nowMillis) {
+        switch (state) {
+            case LESSON:
+                blockStart = periodStart;
+                blockEnd = periodEnd;
+                blockLabel = "left in " + (lessonName.length() > 0 ? lessonName : "class");
+                return true;
+            case BREAK:
+                blockStart = periodStart;
+                blockEnd = periodEnd;
+                blockLabel = "until " + (nextName.length() > 0 ? nextName : "next class");
+                return true;
+            case BEFORE:
+                if (nowMillis < periodEnd - LEAD_IN_MILLIS) return false;
+                blockStart = periodEnd - LEAD_IN_MILLIS;
+                blockEnd = periodEnd;
+                blockLabel = "until " + (nextName.length() > 0 ? nextName : "class");
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    long blockStart;
+    long blockEnd;
+    String blockLabel = "";
+
+    /** Seconds since local midnight on the real (uncorrected) clock, matching [SECONDS_IN_DAY]. */
+    static int secondsOfDay(long millis) {
+        Calendar c = Calendar.getInstance();
+        c.setTimeInMillis(millis);
+        return c.get(Calendar.HOUR_OF_DAY) * 3600 + c.get(Calendar.MINUTE) * 60 + c.get(Calendar.SECOND);
     }
 
     String formatClock(Context context, long millis) {

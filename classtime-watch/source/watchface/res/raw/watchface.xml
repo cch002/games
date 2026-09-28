@@ -1,9 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   Class Time watch face (Watch Face Format v2).
-  Slot 0 "Current class" (RANGED_VALUE) draws the progress ring plus the lesson
-  name and countdown; slot 1 "Next class" (LONG_TEXT) sits below. Both default to
-  the data sources built into the Class Time watch app (eu.nohus.classtime).
+
+  Slot 0 "Current class" (RANGED_VALUE from eu.nohus.classtime) carries the running block as
+  seconds since midnight: MIN = block start, MAX = block end, MIN < 0 = off the clock.
+  TITLE is the status label ("left in Per 3", "until Per 4", "Off the clock!").
+  The face works out the countdown and ring from [SECONDS_IN_DAY], so they tick every second:
+  M:SS while awake, whole minutes in ambient.
+  Slot 1 "Next class" (LONG_TEXT) shows the next lesson; the chip shows unread notifications.
 -->
 <WatchFace width="450" height="450">
   <Metadata key="CLOCK_TYPE" value="DIGITAL"/>
@@ -11,72 +15,105 @@
 
   <UserConfigurations>
     <ColorConfiguration id="accent" displayName="accent_label" defaultValue="0">
-      <ColorOption id="0" displayName="accent_teal" colors="#FF4FD1C5"/>
-      <ColorOption id="1" displayName="accent_amber" colors="#FFF6B94C"/>
+      <ColorOption id="0" displayName="accent_amber" colors="#FFF59E0B"/>
+      <ColorOption id="1" displayName="accent_teal" colors="#FF4FD1C5"/>
       <ColorOption id="2" displayName="accent_coral" colors="#FFF7797D"/>
-      <ColorOption id="3" displayName="accent_lilac" colors="#FFB3A4F7"/>
+      <ColorOption id="3" displayName="accent_indigo" colors="#FF818CF8"/>
     </ColorConfiguration>
   </UserConfigurations>
 
   <Scene backgroundColor="#FF000000">
 
     <!-- Date -->
-    <PartText x="75" y="74" width="300" height="40">
+    <PartText x="75" y="56" width="300" height="30">
       <Text align="CENTER">
-        <Font family="SYNC_TO_DEVICE" size="26" weight="MEDIUM" color="[CONFIGURATION.accent.0]">
-          <Template>%s %s<Parameter expression="[DAY_OF_WEEK_S]"/><Parameter expression="[DAY]"/></Template>
+        <Font family="SYNC_TO_DEVICE" size="20" weight="MEDIUM" color="#FF94A3B8">
+          <Template>%s, %s %s<Parameter expression="[DAY_OF_WEEK_F]"/><Parameter expression="[MONTH_S]"/><Parameter expression="[DAY]"/></Template>
         </Font>
       </Text>
     </PartText>
 
-    <!-- Time: regular when active, thin in ambient -->
+    <!-- Time -->
     <DigitalClock x="0" y="0" width="450" height="450">
-      <TimeText format="hh:mm" hourFormat="SYNC_TO_DEVICE" align="CENTER" x="0" y="110" width="450" height="126" alpha="255">
+      <TimeText format="hh:mm" hourFormat="SYNC_TO_DEVICE" align="CENTER" x="0" y="84" width="450" height="66" alpha="255">
         <Variant mode="AMBIENT" target="alpha" value="0"/>
-        <Font family="SYNC_TO_DEVICE" size="112" weight="MEDIUM" color="#FFFFFFFF"/>
+        <Font family="SYNC_TO_DEVICE" size="54" weight="MEDIUM" color="#FFFFFFFF"/>
       </TimeText>
-      <TimeText format="hh:mm" hourFormat="SYNC_TO_DEVICE" align="CENTER" x="0" y="110" width="450" height="126" alpha="0">
+      <TimeText format="hh:mm" hourFormat="SYNC_TO_DEVICE" align="CENTER" x="0" y="84" width="450" height="66" alpha="0">
         <Variant mode="AMBIENT" target="alpha" value="255"/>
-        <Font family="SYNC_TO_DEVICE" size="112" weight="THIN" color="#FFFFFFFF"/>
+        <Font family="SYNC_TO_DEVICE" size="54" weight="THIN" color="#FFFFFFFF"/>
       </TimeText>
     </DigitalClock>
 
-    <!-- Current class: progress ring + name + countdown -->
+    <!-- Current class: ring, big countdown, status label -->
     <ComplicationSlot x="0" y="0" width="450" height="450" slotId="0" displayName="slot_now_label" supportedTypes="RANGED_VALUE EMPTY">
       <DefaultProviderPolicy defaultSystemProvider="EMPTY" defaultSystemProviderType="EMPTY"
           primaryProvider="eu.nohus.classtime/eu.nohus.classtime.ClassNowComplicationService"
           primaryProviderType="RANGED_VALUE"/>
-      <BoundingBox x="60" y="238" width="330" height="92"/>
+      <BoundingBox x="50" y="152" width="350" height="150"/>
       <Complication type="RANGED_VALUE">
+        <!-- Ring track (awake only) -->
         <PartDraw x="0" y="0" width="450" height="450" alpha="255">
           <Variant mode="AMBIENT" target="alpha" value="0"/>
           <Arc centerX="225" centerY="225" width="422" height="422" startAngle="0" endAngle="360">
-            <Stroke thickness="12" color="#FF1D252D"/>
-          </Arc>
-          <Arc centerX="225" centerY="225" width="422" height="422" startAngle="0" endAngle="0">
-            <Stroke thickness="12" color="[CONFIGURATION.accent.0]" cap="ROUND"/>
-            <Transform target="endAngle" value="360 * ((clamp([COMPLICATION.RANGED_VALUE_VALUE], [COMPLICATION.RANGED_VALUE_MIN], [COMPLICATION.RANGED_VALUE_MAX]) - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]))"/>
+            <Stroke thickness="12" color="#FF1A1F26"/>
           </Arc>
         </PartDraw>
-        <PartText x="60" y="238" width="330" height="48">
+        <Condition>
+          <Expressions>
+            <Expression name="offTheClock">[COMPLICATION.RANGED_VALUE_MIN] &lt; 0</Expression>
+          </Expressions>
+          <Compare expression="offTheClock">
+            <PartText x="50" y="152" width="350" height="112">
+              <Text align="CENTER">
+                <Font family="SYNC_TO_DEVICE" size="96" weight="SEMI_BOLD" color="#FF64748B">
+                  <Template>%s<Parameter expression="off_countdown"/></Template>
+                </Font>
+              </Text>
+            </PartText>
+          </Compare>
+          <Default>
+            <!-- Progress ring (awake only) -->
+            <PartDraw x="0" y="0" width="450" height="450" alpha="255">
+              <Variant mode="AMBIENT" target="alpha" value="0"/>
+              <Arc centerX="225" centerY="225" width="422" height="422" startAngle="0" endAngle="0">
+                <Stroke thickness="12" color="[CONFIGURATION.accent.0]" cap="ROUND"/>
+                <Transform target="endAngle" value="360 * clamp(([SECONDS_IN_DAY] - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]), 0, 1)"/>
+              </Arc>
+            </PartDraw>
+            <!-- Awake: M:SS -->
+            <PartText x="50" y="152" width="350" height="112" alpha="255">
+              <Variant mode="AMBIENT" target="alpha" value="0"/>
+              <Text align="CENTER">
+                <Font family="SYNC_TO_DEVICE" size="96" weight="SEMI_BOLD" color="[CONFIGURATION.accent.0]">
+                  <Template>%s:%s<Parameter expression='numberFormat("0", floor(clamp([COMPLICATION.RANGED_VALUE_MAX] - [SECONDS_IN_DAY], 0, 86400) / 60))'/><Parameter expression='numberFormat("00", clamp([COMPLICATION.RANGED_VALUE_MAX] - [SECONDS_IN_DAY], 0, 86400) % 60)'/></Template>
+                </Font>
+              </Text>
+            </PartText>
+            <!-- Ambient: whole minutes -->
+            <PartText x="50" y="152" width="350" height="112" alpha="0">
+              <Variant mode="AMBIENT" target="alpha" value="255"/>
+              <Text align="CENTER">
+                <Font family="SYNC_TO_DEVICE" size="96" weight="LIGHT" color="#FFCBD5E1">
+                  <Template>%sm<Parameter expression='numberFormat("0", ceil(clamp([COMPLICATION.RANGED_VALUE_MAX] - [SECONDS_IN_DAY], 0, 86400) / 60))'/></Template>
+                </Font>
+              </Text>
+            </PartText>
+          </Default>
+        </Condition>
+        <!-- Status label -->
+        <PartText x="50" y="262" width="350" height="40">
           <Text align="CENTER" ellipsis="TRUE">
-            <Font family="SYNC_TO_DEVICE" size="34" weight="SEMI_BOLD" color="[CONFIGURATION.accent.0]">
+            <Font family="SYNC_TO_DEVICE" size="28" weight="MEDIUM" color="#FFCBD5E1">
               <Template>%s<Parameter expression="[COMPLICATION.TITLE]"/></Template>
-            </Font>
-          </Text>
-        </PartText>
-        <PartText x="60" y="288" width="330" height="40">
-          <Text align="CENTER" ellipsis="TRUE">
-            <Font family="SYNC_TO_DEVICE" size="27" color="#FFC9D1D9">
-              <Template>%s<Parameter expression="[COMPLICATION.TEXT]"/></Template>
             </Font>
           </Text>
         </PartText>
       </Complication>
       <Complication type="EMPTY">
-        <PartText x="60" y="250" width="330" height="40">
+        <PartText x="50" y="190" width="350" height="40">
           <Text align="CENTER">
-            <Font family="SYNC_TO_DEVICE" size="24" color="#FF6B7682">
+            <Font family="SYNC_TO_DEVICE" size="24" color="#FF64748B">
               <Template>%s<Parameter expression="no_class_data"/></Template>
             </Font>
           </Text>
@@ -85,51 +122,78 @@
     </ComplicationSlot>
 
     <!-- Next class -->
-    <ComplicationSlot x="95" y="334" width="260" height="70" slotId="1" displayName="slot_next_label" supportedTypes="LONG_TEXT SHORT_TEXT EMPTY">
+    <ComplicationSlot x="95" y="306" width="260" height="60" slotId="1" displayName="slot_next_label" supportedTypes="LONG_TEXT SHORT_TEXT EMPTY">
       <DefaultProviderPolicy defaultSystemProvider="EMPTY" defaultSystemProviderType="EMPTY"
           primaryProvider="eu.nohus.classtime/eu.nohus.classtime.ClassNextComplicationService"
           primaryProviderType="LONG_TEXT"/>
-      <BoundingBox x="0" y="0" width="260" height="70"/>
+      <BoundingBox x="0" y="0" width="260" height="60"/>
       <Complication type="LONG_TEXT">
-        <PartText x="0" y="0" width="260" height="28">
+        <PartText x="0" y="0" width="260" height="26">
           <Text align="CENTER" ellipsis="TRUE">
-            <Font family="SYNC_TO_DEVICE" size="20" weight="MEDIUM" color="#FF8A95A1">
+            <Font family="SYNC_TO_DEVICE" size="18" weight="MEDIUM" color="#FF64748B">
               <Template>%s<Parameter expression="[COMPLICATION.TITLE]"/></Template>
             </Font>
           </Text>
         </PartText>
-        <PartText x="0" y="28" width="260" height="38">
+        <PartText x="0" y="26" width="260" height="32">
           <Text align="CENTER" ellipsis="TRUE">
-            <Font family="SYNC_TO_DEVICE" size="26" color="#FFFFFFFF">
+            <Font family="SYNC_TO_DEVICE" size="22" color="#FFE2E8F0">
               <Template>%s<Parameter expression="[COMPLICATION.TEXT]"/></Template>
             </Font>
           </Text>
         </PartText>
       </Complication>
       <Complication type="SHORT_TEXT">
-        <PartText x="0" y="0" width="260" height="28">
+        <PartText x="0" y="0" width="260" height="26">
           <Text align="CENTER" ellipsis="TRUE">
-            <Font family="SYNC_TO_DEVICE" size="20" weight="MEDIUM" color="#FF8A95A1">
+            <Font family="SYNC_TO_DEVICE" size="18" weight="MEDIUM" color="#FF64748B">
               <Template>%s<Parameter expression="[COMPLICATION.TITLE]"/></Template>
             </Font>
           </Text>
         </PartText>
-        <PartText x="0" y="28" width="260" height="38">
+        <PartText x="0" y="26" width="260" height="32">
           <Text align="CENTER" ellipsis="TRUE">
-            <Font family="SYNC_TO_DEVICE" size="26" color="#FFFFFFFF">
+            <Font family="SYNC_TO_DEVICE" size="22" color="#FFE2E8F0">
               <Template>%s<Parameter expression="[COMPLICATION.TEXT]"/></Template>
             </Font>
           </Text>
         </PartText>
       </Complication>
       <Complication type="EMPTY">
-        <PartDraw x="0" y="0" width="260" height="70">
-          <Line startX="100" startY="35" endX="160" endY="35">
-            <Stroke thickness="2" color="#FF2A333C"/>
+        <PartDraw x="0" y="0" width="260" height="60">
+          <Line startX="100" startY="30" endX="160" endY="30">
+            <Stroke thickness="2" color="#FF1E293B"/>
           </Line>
         </PartDraw>
       </Complication>
     </ComplicationSlot>
+
+    <!-- Unread notifications chip (awake only, hidden at zero) -->
+    <Group name="unread_chip" x="150" y="372" width="150" height="34" alpha="255">
+      <Variant mode="AMBIENT" target="alpha" value="0"/>
+      <Condition>
+        <Expressions>
+          <Expression name="hasUnread">[UNREAD_NOTIFICATION_COUNT] &gt; 0</Expression>
+        </Expressions>
+        <Compare expression="hasUnread">
+          <PartDraw x="0" y="0" width="150" height="34">
+            <RoundRectangle x="0" y="0" width="150" height="34" cornerRadiusX="17" cornerRadiusY="17">
+              <Fill color="#FF1E293B"/>
+            </RoundRectangle>
+            <Ellipse x="22" y="13" width="8" height="8">
+              <Fill color="#FF6366F1"/>
+            </Ellipse>
+          </PartDraw>
+          <PartText x="34" y="0" width="104" height="34">
+            <Text align="CENTER">
+              <Font family="SYNC_TO_DEVICE" size="18" weight="SEMI_BOLD" color="#FFCBD5E1">
+                <Template>%s Unread<Parameter expression="[UNREAD_NOTIFICATION_COUNT]"/></Template>
+              </Font>
+            </Text>
+          </PartText>
+        </Compare>
+      </Condition>
+    </Group>
 
   </Scene>
 </WatchFace>

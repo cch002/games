@@ -7,10 +7,16 @@ import android.support.wearable.complications.ComplicationText;
 import java.util.concurrent.TimeUnit;
 
 /**
- * "Current class": lesson (or break) name, a live countdown and progress through it.
- * RANGED_VALUE drives the watch face's progress ring.
+ * "Current class": what the countdown is running against ("left in Per 3", "until Per 4",
+ * "Off the clock!") and how long is left.
+ *
+ * RANGED_VALUE carries the block as seconds since local midnight: min = block start,
+ * max = block end, value = now. The Class Time watch face compares those with its own
+ * [SECONDS_IN_DAY] clock, so its M:SS countdown and progress ring tick every second without
+ * this service pushing updates. Off the clock is signalled with min = -1.
  */
 public class ClassNowComplicationService extends ComplicationProviderService {
+    static final String OFF_LABEL = "Off the clock!";
 
     @Override
     public void onComplicationActivated(int id, int type, ComplicationManager manager) {
@@ -26,67 +32,40 @@ public class ClassNowComplicationService extends ComplicationProviderService {
     }
 
     private ComplicationData build(ClassSchedule s, int type, long now) {
-        String title;
-        ComplicationText text;
-        switch (s.state) {
-            case ClassSchedule.LESSON:
-                title = s.lessonName.length() > 0 ? s.lessonName : "Class";
-                text = countdown(s.periodEnd, "^1 left");
-                break;
-            case ClassSchedule.BREAK:
-                title = "Break";
-                text = countdown(s.periodEnd, "^1 left");
-                break;
-            case ClassSchedule.BEFORE:
-                title = "First class";
-                text = countdown(s.periodEnd, "in ^1");
-                break;
-            case ClassSchedule.AFTER:
-                title = "Classes over";
-                text = ComplicationText.plainText("Done for today");
-                break;
-            case ClassSchedule.FREE_DAY:
-                title = "No classes";
-                text = ComplicationText.plainText("Free day");
-                break;
-            default:
-                title = "Class Time";
-                text = ComplicationText.plainText("Open the phone app");
-                break;
-        }
-
-        float max = 1f;
-        float value = 0f;
-        boolean timed = s.state == ClassSchedule.LESSON || s.state == ClassSchedule.BREAK;
-        if (timed && s.periodEnd > s.periodStart) {
-            max = (s.periodEnd - s.periodStart) / 60000f;
-            value = Math.max(0f, Math.min(max, (now - s.periodStart) / 60000f));
-        } else if (s.state == ClassSchedule.AFTER) {
-            value = 1f;
-        }
+        boolean timed = s.resolveBlock(now);
+        String label = timed ? s.blockLabel
+                : s.state == ClassSchedule.NO_DATA ? "Open Class Time on your phone" : OFF_LABEL;
+        ComplicationText countdown = timed
+                ? countdown(s.blockEnd, "^1")
+                : ComplicationText.plainText("--");
 
         ComplicationData.Builder b;
         if (type == ComplicationData.TYPE_LONG_TEXT) {
-            String longTitle = title;
-            if (s.state == ClassSchedule.LESSON && s.lessonRoom.length() > 0) {
-                longTitle = title + " · " + s.lessonRoom;
-            }
             b = new ComplicationData.Builder(ComplicationData.TYPE_LONG_TEXT)
-                    .setLongTitle(ComplicationText.plainText(longTitle))
-                    .setLongText(text);
+                    .setLongTitle(ComplicationText.plainText(label))
+                    .setLongText(countdown);
         } else if (type == ComplicationData.TYPE_SHORT_TEXT) {
             b = new ComplicationData.Builder(ComplicationData.TYPE_SHORT_TEXT)
-                    .setShortTitle(ComplicationText.plainText(title))
-                    .setShortText(text);
+                    .setShortTitle(ComplicationText.plainText(label))
+                    .setShortText(countdown);
         } else {
+            float min = -1f;
+            float max = 0f;
+            float value = -1f;
+            if (timed) {
+                min = ClassSchedule.secondsOfDay(s.blockStart);
+                max = ClassSchedule.secondsOfDay(s.blockEnd);
+                if (max <= min) max = min + 1f;   // guard against zero-length or midnight-spanning blocks
+                value = Math.max(min, Math.min(max, ClassSchedule.secondsOfDay(now)));
+            }
             b = new ComplicationData.Builder(ComplicationData.TYPE_RANGED_VALUE)
-                    .setMinValue(0f)
+                    .setMinValue(min)
                     .setMaxValue(max)
                     .setValue(value)
-                    .setShortTitle(ComplicationText.plainText(title))
-                    .setShortText(text);
+                    .setShortTitle(ComplicationText.plainText(label))
+                    .setShortText(countdown);
         }
-        b.setContentDescription(ComplicationText.plainText(title));
+        b.setContentDescription(ComplicationText.plainText(label));
         b.setTapAction(ComplicationTickReceiver.openApp(this));
         return b.build();
     }
