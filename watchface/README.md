@@ -4,11 +4,15 @@ An analog face modelled on the old Samsung "info dial" layout:
 
 - 1–12 numerals and a minute track
 - **Top:** day of week and date
-- **Left:** battery ring gauge (turns red at 15% or below)
-- **Right:** steps ring gauge, filled toward your daily step goal
-- **Bottom:** a complication you pick yourself (sunrise/sunset by default)
+- **Left ring:** battery by default
+- **Right ring:** steps by default
+- **Bottom:** sunrise/sunset by default
 - White hour and minute hands, red second hand
 - Ambient (always-on) mode hides the second hand and the sub-dial backgrounds, and dims the rest
+
+All three are complication slots, so you can swap each one for something else (heart rate, weather, etc.)
+by long-pressing the face ▸ **Edit**. Values with a range or a goal fill the ring. Plain text and icons
+show in the middle of an empty ring.
 
 ![preview](app/src/main/res/drawable/preview.png)
 
@@ -70,14 +74,13 @@ adb install app/build/outputs/apk/debug/app-debug.apk
 ### 4. Select it
 
 Long-press the current watch face, swipe to the end, tap **+ Add**, and choose **Classic Dial**.
-To change the bottom complication, long-press the face ▸ **Edit**.
-
-If the steps gauge stays at 0, allow the face to read your activity: **Settings ▸ Apps ▸
-Classic Dial ▸ Permissions ▸ Physical activity**.
+To change what the rings and the bottom slot show, long-press the face ▸ **Edit**.
 
 ## Notes
 
-- The steps ring fills toward the step goal the watch reports. If no goal is set, the ring stays empty
-  but the count still shows.
+- The watch's built-in steps complication only sends a number, so the right ring starts out empty.
+  To make it fill toward your goal, pick a steps complication that has a goal (e.g. from Fitbit) in
+  **Edit**.
+- Text on the face must use `%s` in templates. `%d` shows nothing on the watch.
 - The release build is signed with the debug key so it's easy to install. Before publishing to Google
   Play, set up your own signing config in `app/build.gradle.kts`.

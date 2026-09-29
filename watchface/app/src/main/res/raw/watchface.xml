@@ -116,123 +116,371 @@
       <Variant mode="AMBIENT" target="alpha" value="0"/>
       <Ellipse x="0" y="0" width="108" height="108"><Fill color="#1E1E1E"/></Ellipse>
     </PartDraw>
-    <PartText name="day_of_week" x="171" y="84" width="108" height="30">
-      <Text align="CENTER"><Font family="SYNC_TO_DEVICE" size="21" weight="MEDIUM" color="#3DB2E8"><Upper><Template>%s<Parameter expression="[DAY_OF_WEEK_S]"/></Template></Upper></Font></Text>
+    <PartText x="171" y="84" width="108" height="30">
+      <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="21" weight="MEDIUM" color="#3DB2E8"><Template><![CDATA[%s]]><Parameter expression="[DAY_OF_WEEK_S]"/></Template></Font></Text>
     </PartText>
-    <PartText name="day_of_month" x="171" y="112" width="108" height="44">
-      <Text align="CENTER"><Font family="SYNC_TO_DEVICE" size="36" weight="BOLD" color="#FFFFFF"><Template>%d<Parameter expression="[DAY]"/></Template></Font></Text>
+    <PartText x="171" y="112" width="108" height="44">
+      <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="36" weight="BOLD" color="#FFFFFF"><Template><![CDATA[%s]]><Parameter expression="[DAY]"/></Template></Font></Text>
     </PartText>
 
-    <!-- Left: battery gauge -->
-    <Condition>
-      <Expressions>
-        <Expression name="low">[BATTERY_PERCENT] &lt;= 15</Expression>
-      </Expressions>
-      <Compare expression="low">
-        <Group name="battery_gauge_low" x="73" y="163" width="124" height="124">
-          <PartDraw x="0" y="0" width="124" height="124">
-            <Variant mode="AMBIENT" target="alpha" value="0"/>
-            <Ellipse x="0" y="0" width="124" height="124"><Fill color="#1E1E1E"/></Ellipse>
-          </PartDraw>
-          <PartDraw x="0" y="0" width="124" height="124">
-            <Variant mode="AMBIENT" target="alpha" value="90"/>
-            <Arc centerX="62" centerY="62" width="110" height="110" startAngle="-145" endAngle="145">
-              <Stroke color="#3A3A3A" thickness="9" cap="ROUND"/>
-            </Arc>
-          </PartDraw>
-          <PartDraw x="0" y="0" width="124" height="124">
-            <Variant mode="AMBIENT" target="alpha" value="150"/>
-            <Arc centerX="62" centerY="62" width="110" height="110" startAngle="-145" endAngle="145">
-              <Transform target="endAngle" value="-145 + 2.9 * clamp([BATTERY_PERCENT], 0, 100)"/>
-              <Stroke color="#FF5A4E" thickness="9" cap="ROUND"/>
-            </Arc>
-          </PartDraw>
-          <PartText x="6" y="34" width="112" height="48">
-            <Text align="CENTER"><Font family="SYNC_TO_DEVICE" size="38" weight="BOLD" color="#FFFFFF"><Template>%d<Parameter expression="[BATTERY_PERCENT]"/></Template></Font></Text>
-          </PartText>
-          <PartDraw name="battery_icon" x="56" y="88" width="12" height="22">
-            <RoundRectangle x="3.5" y="0" width="5" height="3" cornerRadiusX="1" cornerRadiusY="1"><Fill color="#FF5A4E"/></RoundRectangle>
-            <RoundRectangle x="0" y="2.5" width="12" height="19" cornerRadiusX="2.5" cornerRadiusY="2.5"><Fill color="#FF5A4E"/></RoundRectangle>
-          </PartDraw>
-        </Group>
-      </Compare>
-      <Default>
-        <Group name="battery_gauge" x="73" y="163" width="124" height="124">
-          <PartDraw x="0" y="0" width="124" height="124">
-            <Variant mode="AMBIENT" target="alpha" value="0"/>
-            <Ellipse x="0" y="0" width="124" height="124"><Fill color="#1E1E1E"/></Ellipse>
-          </PartDraw>
-          <PartDraw x="0" y="0" width="124" height="124">
-            <Variant mode="AMBIENT" target="alpha" value="90"/>
-            <Arc centerX="62" centerY="62" width="110" height="110" startAngle="-145" endAngle="145">
-              <Stroke color="#3A3A3A" thickness="9" cap="ROUND"/>
-            </Arc>
-          </PartDraw>
-          <PartDraw x="0" y="0" width="124" height="124">
-            <Variant mode="AMBIENT" target="alpha" value="150"/>
-            <Arc centerX="62" centerY="62" width="110" height="110" startAngle="-145" endAngle="145">
-              <Transform target="endAngle" value="-145 + 2.9 * clamp([BATTERY_PERCENT], 0, 100)"/>
-              <Stroke color="#3DB2E8" thickness="9" cap="ROUND"/>
-            </Arc>
-          </PartDraw>
-          <PartText x="6" y="34" width="112" height="48">
-            <Text align="CENTER"><Font family="SYNC_TO_DEVICE" size="38" weight="BOLD" color="#FFFFFF"><Template>%d<Parameter expression="[BATTERY_PERCENT]"/></Template></Font></Text>
-          </PartText>
-          <PartDraw name="battery_icon" x="56" y="88" width="12" height="22">
-            <RoundRectangle x="3.5" y="0" width="5" height="3" cornerRadiusX="1" cornerRadiusY="1"><Fill color="#3DB2E8"/></RoundRectangle>
-            <RoundRectangle x="0" y="2.5" width="12" height="19" cornerRadiusX="2.5" cornerRadiusY="2.5"><Fill color="#3DB2E8"/></RoundRectangle>
-          </PartDraw>
-        </Group>
-      </Default>
-    </Condition>
+    <!-- Left ring: battery by default -->
+    <ComplicationSlot slotId="1" name="left" displayName="Left ring" x="73" y="163" width="124" height="124"
+        supportedTypes="RANGED_VALUE GOAL_PROGRESS SHORT_TEXT MONOCHROMATIC_IMAGE SMALL_IMAGE EMPTY" isCustomizable="TRUE">
+      <DefaultProviderPolicy defaultSystemProvider="WATCH_BATTERY" defaultSystemProviderType="RANGED_VALUE"/>
+      <BoundingOval x="0" y="0" width="124" height="124" outlinePadding="2"/>
+      <Complication type="RANGED_VALUE">
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="0"/>
+          <Ellipse x="0" y="0" width="124" height="124"><Fill color="#1E1E1E"/></Ellipse>
+        </PartDraw>
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="90"/>
+          <Arc centerX="62" centerY="62" width="110" height="110" startAngle="-145" endAngle="145">
+            <Stroke color="#3A3A3A" thickness="9" cap="ROUND"/>
+          </Arc>
+        </PartDraw>
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="150"/>
+          <Arc centerX="62" centerY="62" width="110" height="110" startAngle="-145" endAngle="145">
+            <Stroke color="#3DB2E8" thickness="9" cap="ROUND"/>
+            <Transform target="endAngle" value="-145 + 290 * ((clamp([COMPLICATION.RANGED_VALUE_VALUE], [COMPLICATION.RANGED_VALUE_MIN], [COMPLICATION.RANGED_VALUE_MAX]) - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]))"/>
+          </Arc>
+        </PartDraw>
+        <Condition>
+          <Expressions>
+            <Expression name="left_ranged_text"><![CDATA[[COMPLICATION.TEXT] != null]]></Expression>
+            <Expression name="left_ranged_title"><![CDATA[[COMPLICATION.TITLE] != null]]></Expression>
+          </Expressions>
+          <Compare expression="left_ranged_text">
+            <PartText x="6" y="36" width="112" height="46">
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="32" weight="BOLD" color="#FFFFFF"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
+            </PartText>
+          </Compare>
+          <Compare expression="left_ranged_title">
+            <PartText x="6" y="36" width="112" height="46">
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="26" weight="BOLD" color="#FFFFFF"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TITLE]"/></Template></Font></Text>
+            </PartText>
+          </Compare>
+        </Condition>
+        <Condition>
+          <Expressions>
+            <Expression name="left_ranged_icon"><![CDATA[[COMPLICATION.MONOCHROMATIC_IMAGE] != null]]></Expression>
+          </Expressions>
+          <Compare expression="left_ranged_icon">
+            <PartImage x="50" y="86" width="24" height="24" tintColor="#3DB2E8">
+              <Image resource="[COMPLICATION.MONOCHROMATIC_IMAGE]"/>
+            </PartImage>
+          </Compare>
+        </Condition>
+      </Complication>
+      <Complication type="GOAL_PROGRESS">
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="0"/>
+          <Ellipse x="0" y="0" width="124" height="124"><Fill color="#1E1E1E"/></Ellipse>
+        </PartDraw>
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="90"/>
+          <Arc centerX="62" centerY="62" width="110" height="110" startAngle="-145" endAngle="145">
+            <Stroke color="#3A3A3A" thickness="9" cap="ROUND"/>
+          </Arc>
+        </PartDraw>
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="150"/>
+          <Arc centerX="62" centerY="62" width="110" height="110" startAngle="-145" endAngle="145">
+            <Stroke color="#3DB2E8" thickness="9" cap="ROUND"/>
+            <Transform target="endAngle" value="-145 + 290 * (clamp([COMPLICATION.GOAL_PROGRESS_VALUE], 0, [COMPLICATION.GOAL_PROGRESS_TARGET_VALUE]) / [COMPLICATION.GOAL_PROGRESS_TARGET_VALUE])"/>
+          </Arc>
+        </PartDraw>
+        <Condition>
+          <Expressions>
+            <Expression name="left_goal_text"><![CDATA[[COMPLICATION.TEXT] != null]]></Expression>
+            <Expression name="left_goal_title"><![CDATA[[COMPLICATION.TITLE] != null]]></Expression>
+          </Expressions>
+          <Compare expression="left_goal_text">
+            <PartText x="6" y="36" width="112" height="46">
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="32" weight="BOLD" color="#FFFFFF"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
+            </PartText>
+          </Compare>
+          <Compare expression="left_goal_title">
+            <PartText x="6" y="36" width="112" height="46">
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="26" weight="BOLD" color="#FFFFFF"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TITLE]"/></Template></Font></Text>
+            </PartText>
+          </Compare>
+        </Condition>
+        <Condition>
+          <Expressions>
+            <Expression name="left_goal_icon"><![CDATA[[COMPLICATION.MONOCHROMATIC_IMAGE] != null]]></Expression>
+          </Expressions>
+          <Compare expression="left_goal_icon">
+            <PartImage x="50" y="86" width="24" height="24" tintColor="#3DB2E8">
+              <Image resource="[COMPLICATION.MONOCHROMATIC_IMAGE]"/>
+            </PartImage>
+          </Compare>
+        </Condition>
+      </Complication>
+      <Complication type="SHORT_TEXT">
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="0"/>
+          <Ellipse x="0" y="0" width="124" height="124"><Fill color="#1E1E1E"/></Ellipse>
+        </PartDraw>
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="90"/>
+          <Arc centerX="62" centerY="62" width="110" height="110" startAngle="-145" endAngle="145">
+            <Stroke color="#3A3A3A" thickness="9" cap="ROUND"/>
+          </Arc>
+        </PartDraw>
+        <Condition>
+          <Expressions>
+            <Expression name="left_short_text"><![CDATA[[COMPLICATION.TEXT] != null]]></Expression>
+            <Expression name="left_short_title"><![CDATA[[COMPLICATION.TITLE] != null]]></Expression>
+          </Expressions>
+          <Compare expression="left_short_text">
+            <PartText x="6" y="36" width="112" height="46">
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="32" weight="BOLD" color="#FFFFFF"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
+            </PartText>
+          </Compare>
+          <Compare expression="left_short_title">
+            <PartText x="6" y="36" width="112" height="46">
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="26" weight="BOLD" color="#FFFFFF"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TITLE]"/></Template></Font></Text>
+            </PartText>
+          </Compare>
+        </Condition>
+        <Condition>
+          <Expressions>
+            <Expression name="left_short_icon"><![CDATA[[COMPLICATION.MONOCHROMATIC_IMAGE] != null]]></Expression>
+          </Expressions>
+          <Compare expression="left_short_icon">
+            <PartImage x="50" y="86" width="24" height="24" tintColor="#3DB2E8">
+              <Image resource="[COMPLICATION.MONOCHROMATIC_IMAGE]"/>
+            </PartImage>
+          </Compare>
+        </Condition>
+      </Complication>
+      <Complication type="MONOCHROMATIC_IMAGE">
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="0"/>
+          <Ellipse x="0" y="0" width="124" height="124"><Fill color="#1E1E1E"/></Ellipse>
+        </PartDraw>
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="90"/>
+          <Arc centerX="62" centerY="62" width="110" height="110" startAngle="-145" endAngle="145">
+            <Stroke color="#3A3A3A" thickness="9" cap="ROUND"/>
+          </Arc>
+        </PartDraw>
+        <PartImage x="38" y="38" width="48" height="48" tintColor="#3DB2E8">
+          <Image resource="[COMPLICATION.MONOCHROMATIC_IMAGE]"/>
+        </PartImage>
+      </Complication>
+      <Complication type="SMALL_IMAGE">
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="0"/>
+          <Ellipse x="0" y="0" width="124" height="124"><Fill color="#1E1E1E"/></Ellipse>
+        </PartDraw>
+        <PartImage x="26" y="26" width="72" height="72">
+          <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
+        </PartImage>
+      </Complication>
+      <Complication type="EMPTY">
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="0"/>
+          <Ellipse x="0" y="0" width="124" height="124"><Fill color="#1E1E1E"/></Ellipse>
+        </PartDraw>
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="90"/>
+          <Arc centerX="62" centerY="62" width="110" height="110" startAngle="-145" endAngle="145">
+            <Stroke color="#3A3A3A" thickness="9" cap="ROUND"/>
+          </Arc>
+        </PartDraw>
+      </Complication>
+    </ComplicationSlot>
 
-    <!-- Right: steps gauge -->
-    <Group name="steps_gauge" x="253" y="163" width="124" height="124">
-      <PartDraw x="0" y="0" width="124" height="124">
-        <Variant mode="AMBIENT" target="alpha" value="0"/>
-        <Ellipse x="0" y="0" width="124" height="124"><Fill color="#1E1E1E"/></Ellipse>
-      </PartDraw>
-      <PartDraw x="0" y="0" width="124" height="124">
-        <Variant mode="AMBIENT" target="alpha" value="90"/>
-        <Arc centerX="62" centerY="62" width="110" height="110" startAngle="-145" endAngle="145">
-          <Stroke color="#3A3A3A" thickness="9" cap="ROUND"/>
-        </Arc>
-      </PartDraw>
-      <PartDraw x="0" y="0" width="124" height="124">
-        <Variant mode="AMBIENT" target="alpha" value="150"/>
-        <Arc centerX="62" centerY="62" width="110" height="110" startAngle="-145" endAngle="145">
-          <Transform target="endAngle" value="-145 + 2.9 * clamp([STEP_PERCENT], 0, 100)"/>
-          <Stroke color="#2BD66B" thickness="9" cap="ROUND"/>
-        </Arc>
-      </PartDraw>
-      <PartText x="6" y="34" width="112" height="48">
-        <Text align="CENTER"><Font family="SYNC_TO_DEVICE" size="30" weight="BOLD" color="#FFFFFF"><Template>%d<Parameter expression="[STEP_COUNT]"/></Template></Font></Text>
-      </PartText>
-      <PartDraw name="shoe_icon" x="50" y="91" width="24" height="18">
-        <RoundRectangle x="2" y="0" width="9" height="12" cornerRadiusX="3" cornerRadiusY="3"><Fill color="#2BD66B"/></RoundRectangle>
-        <RoundRectangle x="2" y="6" width="22" height="9" cornerRadiusX="4.5" cornerRadiusY="4.5"><Fill color="#2BD66B"/></RoundRectangle>
-        <RoundRectangle x="0" y="14" width="24" height="3.5" cornerRadiusX="1.5" cornerRadiusY="1.5"><Fill color="#2BD66B"/></RoundRectangle>
-      </PartDraw>
-    </Group>
+    <!-- Right ring: steps by default -->
+    <ComplicationSlot slotId="2" name="right" displayName="Right ring" x="253" y="163" width="124" height="124"
+        supportedTypes="RANGED_VALUE GOAL_PROGRESS SHORT_TEXT MONOCHROMATIC_IMAGE SMALL_IMAGE EMPTY" isCustomizable="TRUE">
+      <DefaultProviderPolicy defaultSystemProvider="STEP_COUNT" defaultSystemProviderType="SHORT_TEXT"/>
+      <BoundingOval x="0" y="0" width="124" height="124" outlinePadding="2"/>
+      <Complication type="RANGED_VALUE">
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="0"/>
+          <Ellipse x="0" y="0" width="124" height="124"><Fill color="#1E1E1E"/></Ellipse>
+        </PartDraw>
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="90"/>
+          <Arc centerX="62" centerY="62" width="110" height="110" startAngle="-145" endAngle="145">
+            <Stroke color="#3A3A3A" thickness="9" cap="ROUND"/>
+          </Arc>
+        </PartDraw>
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="150"/>
+          <Arc centerX="62" centerY="62" width="110" height="110" startAngle="-145" endAngle="145">
+            <Stroke color="#2BD66B" thickness="9" cap="ROUND"/>
+            <Transform target="endAngle" value="-145 + 290 * ((clamp([COMPLICATION.RANGED_VALUE_VALUE], [COMPLICATION.RANGED_VALUE_MIN], [COMPLICATION.RANGED_VALUE_MAX]) - [COMPLICATION.RANGED_VALUE_MIN]) / ([COMPLICATION.RANGED_VALUE_MAX] - [COMPLICATION.RANGED_VALUE_MIN]))"/>
+          </Arc>
+        </PartDraw>
+        <Condition>
+          <Expressions>
+            <Expression name="right_ranged_text"><![CDATA[[COMPLICATION.TEXT] != null]]></Expression>
+            <Expression name="right_ranged_title"><![CDATA[[COMPLICATION.TITLE] != null]]></Expression>
+          </Expressions>
+          <Compare expression="right_ranged_text">
+            <PartText x="6" y="36" width="112" height="46">
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="32" weight="BOLD" color="#FFFFFF"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
+            </PartText>
+          </Compare>
+          <Compare expression="right_ranged_title">
+            <PartText x="6" y="36" width="112" height="46">
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="26" weight="BOLD" color="#FFFFFF"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TITLE]"/></Template></Font></Text>
+            </PartText>
+          </Compare>
+        </Condition>
+        <Condition>
+          <Expressions>
+            <Expression name="right_ranged_icon"><![CDATA[[COMPLICATION.MONOCHROMATIC_IMAGE] != null]]></Expression>
+          </Expressions>
+          <Compare expression="right_ranged_icon">
+            <PartImage x="50" y="86" width="24" height="24" tintColor="#2BD66B">
+              <Image resource="[COMPLICATION.MONOCHROMATIC_IMAGE]"/>
+            </PartImage>
+          </Compare>
+        </Condition>
+      </Complication>
+      <Complication type="GOAL_PROGRESS">
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="0"/>
+          <Ellipse x="0" y="0" width="124" height="124"><Fill color="#1E1E1E"/></Ellipse>
+        </PartDraw>
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="90"/>
+          <Arc centerX="62" centerY="62" width="110" height="110" startAngle="-145" endAngle="145">
+            <Stroke color="#3A3A3A" thickness="9" cap="ROUND"/>
+          </Arc>
+        </PartDraw>
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="150"/>
+          <Arc centerX="62" centerY="62" width="110" height="110" startAngle="-145" endAngle="145">
+            <Stroke color="#2BD66B" thickness="9" cap="ROUND"/>
+            <Transform target="endAngle" value="-145 + 290 * (clamp([COMPLICATION.GOAL_PROGRESS_VALUE], 0, [COMPLICATION.GOAL_PROGRESS_TARGET_VALUE]) / [COMPLICATION.GOAL_PROGRESS_TARGET_VALUE])"/>
+          </Arc>
+        </PartDraw>
+        <Condition>
+          <Expressions>
+            <Expression name="right_goal_text"><![CDATA[[COMPLICATION.TEXT] != null]]></Expression>
+            <Expression name="right_goal_title"><![CDATA[[COMPLICATION.TITLE] != null]]></Expression>
+          </Expressions>
+          <Compare expression="right_goal_text">
+            <PartText x="6" y="36" width="112" height="46">
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="32" weight="BOLD" color="#FFFFFF"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
+            </PartText>
+          </Compare>
+          <Compare expression="right_goal_title">
+            <PartText x="6" y="36" width="112" height="46">
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="26" weight="BOLD" color="#FFFFFF"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TITLE]"/></Template></Font></Text>
+            </PartText>
+          </Compare>
+        </Condition>
+        <Condition>
+          <Expressions>
+            <Expression name="right_goal_icon"><![CDATA[[COMPLICATION.MONOCHROMATIC_IMAGE] != null]]></Expression>
+          </Expressions>
+          <Compare expression="right_goal_icon">
+            <PartImage x="50" y="86" width="24" height="24" tintColor="#2BD66B">
+              <Image resource="[COMPLICATION.MONOCHROMATIC_IMAGE]"/>
+            </PartImage>
+          </Compare>
+        </Condition>
+      </Complication>
+      <Complication type="SHORT_TEXT">
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="0"/>
+          <Ellipse x="0" y="0" width="124" height="124"><Fill color="#1E1E1E"/></Ellipse>
+        </PartDraw>
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="90"/>
+          <Arc centerX="62" centerY="62" width="110" height="110" startAngle="-145" endAngle="145">
+            <Stroke color="#3A3A3A" thickness="9" cap="ROUND"/>
+          </Arc>
+        </PartDraw>
+        <Condition>
+          <Expressions>
+            <Expression name="right_short_text"><![CDATA[[COMPLICATION.TEXT] != null]]></Expression>
+            <Expression name="right_short_title"><![CDATA[[COMPLICATION.TITLE] != null]]></Expression>
+          </Expressions>
+          <Compare expression="right_short_text">
+            <PartText x="6" y="36" width="112" height="46">
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="32" weight="BOLD" color="#FFFFFF"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
+            </PartText>
+          </Compare>
+          <Compare expression="right_short_title">
+            <PartText x="6" y="36" width="112" height="46">
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="26" weight="BOLD" color="#FFFFFF"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TITLE]"/></Template></Font></Text>
+            </PartText>
+          </Compare>
+        </Condition>
+        <Condition>
+          <Expressions>
+            <Expression name="right_short_icon"><![CDATA[[COMPLICATION.MONOCHROMATIC_IMAGE] != null]]></Expression>
+          </Expressions>
+          <Compare expression="right_short_icon">
+            <PartImage x="50" y="86" width="24" height="24" tintColor="#2BD66B">
+              <Image resource="[COMPLICATION.MONOCHROMATIC_IMAGE]"/>
+            </PartImage>
+          </Compare>
+        </Condition>
+      </Complication>
+      <Complication type="MONOCHROMATIC_IMAGE">
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="0"/>
+          <Ellipse x="0" y="0" width="124" height="124"><Fill color="#1E1E1E"/></Ellipse>
+        </PartDraw>
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="90"/>
+          <Arc centerX="62" centerY="62" width="110" height="110" startAngle="-145" endAngle="145">
+            <Stroke color="#3A3A3A" thickness="9" cap="ROUND"/>
+          </Arc>
+        </PartDraw>
+        <PartImage x="38" y="38" width="48" height="48" tintColor="#2BD66B">
+          <Image resource="[COMPLICATION.MONOCHROMATIC_IMAGE]"/>
+        </PartImage>
+      </Complication>
+      <Complication type="SMALL_IMAGE">
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="0"/>
+          <Ellipse x="0" y="0" width="124" height="124"><Fill color="#1E1E1E"/></Ellipse>
+        </PartDraw>
+        <PartImage x="26" y="26" width="72" height="72">
+          <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
+        </PartImage>
+      </Complication>
+      <Complication type="EMPTY">
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="0"/>
+          <Ellipse x="0" y="0" width="124" height="124"><Fill color="#1E1E1E"/></Ellipse>
+        </PartDraw>
+        <PartDraw x="0" y="0" width="124" height="124">
+          <Variant mode="AMBIENT" target="alpha" value="90"/>
+          <Arc centerX="62" centerY="62" width="110" height="110" startAngle="-145" endAngle="145">
+            <Stroke color="#3A3A3A" thickness="9" cap="ROUND"/>
+          </Arc>
+        </PartDraw>
+      </Complication>
+    </ComplicationSlot>
 
-    <!-- Bottom: user-selectable complication (sunrise/sunset by default) -->
+    <!-- Bottom: sunrise/sunset by default -->
     <PartDraw name="bottom_disc" x="171" y="276" width="108" height="108">
       <Variant mode="AMBIENT" target="alpha" value="0"/>
       <Ellipse x="0" y="0" width="108" height="108"><Fill color="#1E1E1E"/></Ellipse>
     </PartDraw>
     <ComplicationSlot slotId="0" name="bottom" displayName="Bottom" x="171" y="276" width="108" height="108"
-        supportedTypes="SHORT_TEXT MONOCHROMATIC_IMAGE SMALL_IMAGE" isCustomizable="TRUE">
+        supportedTypes="SHORT_TEXT MONOCHROMATIC_IMAGE SMALL_IMAGE EMPTY" isCustomizable="TRUE">
       <DefaultProviderPolicy defaultSystemProvider="SUNRISE_SUNSET" defaultSystemProviderType="SHORT_TEXT"/>
-      <BoundingOval x="0" y="0" width="108" height="108"/>
+      <BoundingOval x="0" y="0" width="108" height="108" outlinePadding="2"/>
       <Complication type="SHORT_TEXT">
-        <Group name="short_text" x="0" y="0" width="108" height="108">
-          <PartImage x="40" y="18" width="28" height="28" tintColor="#F28B82">
-            <Image resource="[COMPLICATION.MONOCHROMATIC_IMAGE]"/>
-          </PartImage>
-          <PartText x="4" y="50" width="100" height="38">
-            <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="26" weight="MEDIUM" color="#FFFFFF"><Template>%s<Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
-          </PartText>
-        </Group>
+        <PartImage x="40" y="18" width="28" height="28" tintColor="#F28B82">
+          <Image resource="[COMPLICATION.MONOCHROMATIC_IMAGE]"/>
+        </PartImage>
+        <PartText x="4" y="50" width="100" height="38">
+          <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="26" weight="MEDIUM" color="#FFFFFF"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
+        </PartText>
       </Complication>
       <Complication type="MONOCHROMATIC_IMAGE">
         <PartImage x="30" y="30" width="48" height="48" tintColor="#FFFFFF">
@@ -244,34 +492,31 @@
           <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
         </PartImage>
       </Complication>
+      <Complication type="EMPTY">
+      </Complication>
     </ComplicationSlot>
 
     <!-- Hands -->
     <Group name="hour_hand" x="0" y="0" width="450" height="450" pivotX="0.5" pivotY="0.5">
       <Transform target="angle" value="([HOUR_0_11] + [MINUTE] / 60) * 30"/>
       <PartDraw x="0" y="0" width="450" height="450">
-        <Line startX="225" startY="225.0" endX="225" endY="126"><Stroke color="#FFFFFF" thickness="13" cap="ROUND"/></Line>
+        <Line startX="225" startY="225" endX="225" endY="126"><Stroke color="#FFFFFF" thickness="13" cap="ROUND"/></Line>
       </PartDraw>
     </Group>
     <Group name="minute_hand" x="0" y="0" width="450" height="450" pivotX="0.5" pivotY="0.5">
       <Transform target="angle" value="([MINUTE] + [SECOND] / 60) * 6"/>
       <PartDraw x="0" y="0" width="450" height="450">
-        <Line startX="225" startY="225.0" endX="225" endY="50"><Stroke color="#FFFFFF" thickness="11" cap="ROUND"/></Line>
+        <Line startX="225" startY="225" endX="225" endY="50"><Stroke color="#FFFFFF" thickness="11" cap="ROUND"/></Line>
       </PartDraw>
     </Group>
     <Group name="second_hand" x="0" y="0" width="450" height="450" pivotX="0.5" pivotY="0.5">
-      <Variant mode="AMBIENT" target="alpha" value="0"/>
       <Transform target="angle" value="[SECOND] * 6"/>
+      <Variant mode="AMBIENT" target="alpha" value="0"/>
       <PartDraw x="0" y="0" width="450" height="450">
-        <Line startX="225" startY="259.0" endX="225" endY="16"><Stroke color="#E8322B" thickness="3" cap="ROUND"/></Line>
-        <Ellipse x="217.0" y="217.0" width="16" height="16"><Fill color="#E8322B"/></Ellipse>
+        <Line startX="225" startY="259" endX="225" endY="16"><Stroke color="#E8322B" thickness="3" cap="ROUND"/></Line>
+        <Ellipse x="217" y="217" width="16" height="16"><Fill color="#E8322B"/></Ellipse>
         <Ellipse x="222.5" y="222.5" width="5" height="5"><Fill color="#000000"/></Ellipse>
       </PartDraw>
     </Group>
-    <!-- Hub shown in ambient mode, when the second hand is hidden -->
-    <PartDraw name="ambient_hub" x="218" y="218" width="14" height="14" alpha="0">
-      <Variant mode="AMBIENT" target="alpha" value="255"/>
-      <Ellipse x="0" y="0" width="14" height="14"><Fill color="#FFFFFF"/></Ellipse>
-    </PartDraw>
   </Scene>
 </WatchFace>

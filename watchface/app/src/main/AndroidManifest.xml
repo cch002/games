@@ -3,9 +3,6 @@
 
     <uses-feature android:name="android.hardware.type.watch" />
 
-    <!-- Needed for the [STEP_COUNT] / [STEP_PERCENT] data used by the steps gauge. -->
-    <uses-permission android:name="android.permission.ACTIVITY_RECOGNITION" />
-
     <!-- Watch Face Format faces contain no code. -->
     <application
         android:hasCode="false"
