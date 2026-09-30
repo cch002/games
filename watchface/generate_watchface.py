@@ -197,12 +197,48 @@ def ring_slot(slot_id, name, label, cx, colour, provider, provider_type):
 
 
 def date_dial():
+    """Top dial. A complication slot (day and date by default): the watch shows
+    nothing for text built from the built-in [DAY] / [DAY_OF_WEEK_S] sources."""
     r = SUB_R
-    dow = text_part("[DAY_OF_WEEK_S]", C - r, TOP_Y - 36, 2 * r, 30, 21, BLUE, "MEDIUM")
-    day = text_part("[DAY]", C - r, TOP_Y - 8, 2 * r, 44, 36)
+    d = 2 * r
+    title = text_part("[COMPLICATION.TITLE]", 0, r - 36, d, 30, 21, BLUE, "MEDIUM")
+    text = text_part("[COMPLICATION.TEXT]", 0, r - 8, d, 44, 36)
+    text_only = text_part("[COMPLICATION.TEXT]", 4, r - 20, d - 8, 40, 28)
+    icon = image_part("[COMPLICATION.MONOCHROMATIC_IMAGE]", r - 14, r - 38, 28, BLUE)
+    icon_text = text_part("[COMPLICATION.TEXT]", 4, r - 6, d - 8, 38, 26, weight="MEDIUM")
     return f"""{disc("date_disc", C, TOP_Y, r)}
-{indent(dow, 2)}
-{indent(day, 2)}"""
+    <ComplicationSlot slotId="3" name="top" displayName="Top" x="{i(C - r)}" y="{i(TOP_Y - r)}" width="{d}" height="{d}"
+        supportedTypes="SHORT_TEXT MONOCHROMATIC_IMAGE SMALL_IMAGE EMPTY" isCustomizable="TRUE">
+      <DefaultProviderPolicy defaultSystemProvider="DAY_AND_DATE" defaultSystemProviderType="SHORT_TEXT"/>
+      <BoundingOval x="0" y="0" width="{d}" height="{d}" outlinePadding="2"/>
+      <Complication type="SHORT_TEXT">
+        <Condition>
+          <Expressions>
+            <Expression name="top_title"><![CDATA[[COMPLICATION.TITLE] != null]]></Expression>
+            <Expression name="top_icon"><![CDATA[[COMPLICATION.MONOCHROMATIC_IMAGE] != null]]></Expression>
+          </Expressions>
+          <Compare expression="top_title">
+{indent(title, 6)}
+{indent(text, 6)}
+          </Compare>
+          <Compare expression="top_icon">
+{indent(icon, 6)}
+{indent(icon_text, 6)}
+          </Compare>
+          <Default>
+{indent(text_only, 6)}
+          </Default>
+        </Condition>
+      </Complication>
+      <Complication type="MONOCHROMATIC_IMAGE">
+{indent(image_part("[COMPLICATION.MONOCHROMATIC_IMAGE]", r - 24, r - 24, 48, WHITE), 4)}
+      </Complication>
+      <Complication type="SMALL_IMAGE">
+{indent(image_part("[COMPLICATION.SMALL_IMAGE]", r - 32, r - 32, 64), 4)}
+      </Complication>
+      <Complication type="EMPTY">
+      </Complication>
+    </ComplicationSlot>"""
 
 
 def bottom_complication():
@@ -259,7 +295,7 @@ def build():
 {numerals()}
     </Group>
 
-    <!-- Top: day + date -->
+    <!-- Top: day + date by default -->
 {date_dial()}
 
     <!-- Left ring: battery by default -->

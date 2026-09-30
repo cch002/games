@@ -111,17 +111,57 @@
       </PartText>
     </Group>
 
-    <!-- Top: day + date -->
+    <!-- Top: day + date by default -->
     <PartDraw name="date_disc" x="171" y="66" width="108" height="108">
       <Variant mode="AMBIENT" target="alpha" value="0"/>
       <Ellipse x="0" y="0" width="108" height="108"><Fill color="#1E1E1E"/></Ellipse>
     </PartDraw>
-    <PartText x="171" y="84" width="108" height="30">
-      <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="21" weight="MEDIUM" color="#3DB2E8"><Template><![CDATA[%s]]><Parameter expression="[DAY_OF_WEEK_S]"/></Template></Font></Text>
-    </PartText>
-    <PartText x="171" y="112" width="108" height="44">
-      <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="36" weight="BOLD" color="#FFFFFF"><Template><![CDATA[%s]]><Parameter expression="[DAY]"/></Template></Font></Text>
-    </PartText>
+    <ComplicationSlot slotId="3" name="top" displayName="Top" x="171" y="66" width="108" height="108"
+        supportedTypes="SHORT_TEXT MONOCHROMATIC_IMAGE SMALL_IMAGE EMPTY" isCustomizable="TRUE">
+      <DefaultProviderPolicy defaultSystemProvider="DAY_AND_DATE" defaultSystemProviderType="SHORT_TEXT"/>
+      <BoundingOval x="0" y="0" width="108" height="108" outlinePadding="2"/>
+      <Complication type="SHORT_TEXT">
+        <Condition>
+          <Expressions>
+            <Expression name="top_title"><![CDATA[[COMPLICATION.TITLE] != null]]></Expression>
+            <Expression name="top_icon"><![CDATA[[COMPLICATION.MONOCHROMATIC_IMAGE] != null]]></Expression>
+          </Expressions>
+          <Compare expression="top_title">
+            <PartText x="0" y="18" width="108" height="30">
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="21" weight="MEDIUM" color="#3DB2E8"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TITLE]"/></Template></Font></Text>
+            </PartText>
+            <PartText x="0" y="46" width="108" height="44">
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="36" weight="BOLD" color="#FFFFFF"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
+            </PartText>
+          </Compare>
+          <Compare expression="top_icon">
+            <PartImage x="40" y="16" width="28" height="28" tintColor="#3DB2E8">
+              <Image resource="[COMPLICATION.MONOCHROMATIC_IMAGE]"/>
+            </PartImage>
+            <PartText x="4" y="48" width="100" height="38">
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="26" weight="MEDIUM" color="#FFFFFF"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
+            </PartText>
+          </Compare>
+          <Default>
+            <PartText x="4" y="34" width="100" height="40">
+              <Text align="CENTER" ellipsis="TRUE"><Font family="SYNC_TO_DEVICE" size="28" weight="BOLD" color="#FFFFFF"><Template><![CDATA[%s]]><Parameter expression="[COMPLICATION.TEXT]"/></Template></Font></Text>
+            </PartText>
+          </Default>
+        </Condition>
+      </Complication>
+      <Complication type="MONOCHROMATIC_IMAGE">
+        <PartImage x="30" y="30" width="48" height="48" tintColor="#FFFFFF">
+          <Image resource="[COMPLICATION.MONOCHROMATIC_IMAGE]"/>
+        </PartImage>
+      </Complication>
+      <Complication type="SMALL_IMAGE">
+        <PartImage x="22" y="22" width="64" height="64">
+          <Image resource="[COMPLICATION.SMALL_IMAGE]"/>
+        </PartImage>
+      </Complication>
+      <Complication type="EMPTY">
+      </Complication>
+    </ComplicationSlot>
 
     <!-- Left ring: battery by default -->
     <ComplicationSlot slotId="1" name="left" displayName="Left ring" x="73" y="163" width="124" height="124"

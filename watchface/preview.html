@@ -61,8 +61,10 @@ const state = { ambient: false, frozen: new URLSearchParams(location.search).has
 function complications() {
   const battery = +$("battery").value, steps = +$("steps").value, goal = +$("goal").value;
   const stepsType = $("stepsType").value;
+  const now = state.frozen ? new Date(2026, 8, 28, 10, 8, 30) : new Date();
   return {
     0: { type: "SHORT_TEXT", TEXT: "7:30", MONOCHROMATIC_IMAGE: "sunrise" },
+    3: { type: "SHORT_TEXT", TITLE: now.toLocaleDateString("en-US", { weekday: "short" }).toUpperCase(), TEXT: String(now.getDate()) },
     1: { type: "RANGED_VALUE", TEXT: battery + "%", MONOCHROMATIC_IMAGE: "battery",
          RANGED_VALUE_VALUE: battery, RANGED_VALUE_MIN: 0, RANGED_VALUE_MAX: 100 },
     2: { type: stepsType, TEXT: steps.toLocaleString(), MONOCHROMATIC_IMAGE: "shoe",

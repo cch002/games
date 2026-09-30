@@ -3,14 +3,14 @@
 An analog face modelled on the old Samsung "info dial" layout:
 
 - 1–12 numerals and a minute track
-- **Top:** day of week and date
+- **Top:** day of week and date by default
 - **Left ring:** battery by default
 - **Right ring:** steps by default
 - **Bottom:** sunrise/sunset by default
 - White hour and minute hands, red second hand
 - Ambient (always-on) mode hides the second hand and the sub-dial backgrounds, and dims the rest
 
-All three are complication slots, so you can swap each one for something else (heart rate, weather, etc.)
+All four dials are complication slots, so you can swap each one for something else (heart rate, weather, etc.)
 by long-pressing the face ▸ **Edit**. Values with a range or a goal fill the ring. Plain text and icons
 show in the middle of an empty ring.
 
@@ -81,6 +81,7 @@ To change what the rings and the bottom slot show, long-press the face ▸ **Edi
 - The watch's built-in steps complication only sends a number, so the right ring starts out empty.
   To make it fill toward your goal, pick a steps complication that has a goal (e.g. from Fitbit) in
   **Edit**.
-- Text on the face must use `%s` in templates. `%d` shows nothing on the watch.
+- Text on the face must use `%s` in templates. `%d` shows nothing on the watch, and neither does text
+  built from the built-in `[DAY]` / `[DAY_OF_WEEK_S]` sources, so every dial reads from a complication.
 - The release build is signed with the debug key so it's easy to install. Before publishing to Google
   Play, set up your own signing config in `app/build.gradle.kts`.
