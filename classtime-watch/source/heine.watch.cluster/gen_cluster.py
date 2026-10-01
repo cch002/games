@@ -6,7 +6,13 @@ the class countdown (Class Time "Current class"), with its progress ring around 
 Shares expression/markup helpers with gen_face.py.
 Run: python3 gen_cluster.py > res/raw/watchface.xml
 """
-import gen_face as g
+import os
+import sys
+
+# gen_face.py lives in the sibling heine.watch.classtime folder (or next to this file).
+_here = os.path.dirname(os.path.abspath(__file__))
+sys.path[:0] = [_here, os.path.join(_here, "..", "heine.watch.classtime")]
+import gen_face as g  # noqa: E402
 from gen_face import W, text, group, condition, list_config, AWAKE_ONLY, AMBIENT_ONLY
 
 ACCENT = "[CONFIGURATION.accent.0]"   # rings, countdown, icons
