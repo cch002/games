@@ -389,6 +389,16 @@
         preview: 'frontlines'
       },
       {
+        name: 'Pastel Lines',
+        kind: 'game',
+        tag: 'Line-up puzzle',
+        desc: 'Slide blocks around the board to line up five of a color. Every miss drops in three more, so keep the board clear and earn undos, hammers and bombs as you go.',
+        status: 'live',
+        href: './pastel.lines/',
+        accent: '#d3a6e8',
+        preview: 'pastel'
+      },
+      {
         name: 'Skull King Scorer',
         kind: 'app',
         tag: 'Card game score keeper',
@@ -664,6 +674,39 @@
       return wrap;
     }
 
+    function makePastelPreview() {
+      const colors = ['#f5a3be','#ffbe98','#f8dc78','#a3dfb2','#8fd3df','#a9b6f0','#d3a6e8'];
+      // a 9x6 slice of the board: a lilac line of five mid-clear, plus scattered blocks
+      const layout = [
+        '..0...3..',
+        '.4..1....',
+        '6.6666...',
+        '...2..5.0',
+        '.3....1..',
+        '5...4...2'
+      ];
+      const cs = 16, gap = 3, ox = 100 - (9 * (cs + gap) - gap) / 2, oy = 4;
+      let cells = '';
+      layout.forEach((row, y) => [...row].forEach((ch, x) => {
+        const px = ox + x * (cs + gap), py = oy + y * (cs + gap);
+        cells += `<rect x="${px}" y="${py}" width="${cs}" height="${cs}" rx="4" fill="#2a2433"/>`;
+        if (ch !== '.') {
+          const glow = y === 2 && ch === '6' ? ' class="pl-pulse"' : '';
+          cells += `<g${glow}><rect x="${px + 1.5}" y="${py + 1.5}" width="${cs - 3}" height="${cs - 3}" rx="3.5" fill="${colors[+ch]}"/>` +
+                   `<ellipse cx="${px + 5.5}" cy="${py + 4.8}" rx="2.6" ry="1.4" fill="#fff" opacity=".55"/></g>`;
+        }
+      }));
+      const wrap = document.createElement('div');
+      wrap.className = 'cab-icon';
+      wrap.innerHTML = `
+        <svg viewBox="0 0 200 120" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+          <style>.pl-pulse{animation:plPulse 1.6s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+          @keyframes plPulse{0%,100%{opacity:1}50%{opacity:.45}}</style>
+          ${cells}
+        </svg>`;
+      return wrap;
+    }
+
     function buildScreen(p) {
       const screen = document.createElement('div');
       screen.className = 'screen';
@@ -679,6 +722,8 @@
         screen.appendChild(makeNmsPreview());
       } else if (p.preview === 'crossword') {
         screen.appendChild(makeCrosswordPreview());
+      } else if (p.preview === 'pastel') {
+        screen.appendChild(makePastelPreview());
       } else if (p.preview === 'bobs') {
         screen.appendChild(makeBobsPreview());
       } else {
