@@ -1,5 +1,5 @@
-// Pastel Lines offline cache. Bump the version when the game changes.
-const CACHE = 'pastel-lines-v1';
+// Fives offline cache. Bump the version when the game changes.
+const CACHE = 'pastel-lines-v2';
 const CORE = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png'];
 
 self.addEventListener('install', e => {

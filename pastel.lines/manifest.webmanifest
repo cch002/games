@@ -1,6 +1,6 @@
 {
-  "name": "Pastel Lines",
-  "short_name": "Pastel Lines",
+  "name": "Fives",
+  "short_name": "Fives",
   "description": "Slide blocks to line up five of a color. Every miss drops in three more.",
   "start_url": "./",
   "scope": "./",
